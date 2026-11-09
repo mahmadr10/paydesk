@@ -20,3 +20,8 @@ test-results/
 
 # Local Claude Code config
 .claude/
+
+# Demo video output (upload to YouTube instead)
+demo/*.webm
+demo/*.mp4
+demo/raw/
