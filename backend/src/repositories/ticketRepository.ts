@@ -39,12 +39,27 @@ export async function nextTicketNumber() {
   return `TCK-${String(seq).padStart(6, "0")}`;
 }
 
+// Atomically flips a PENDING refund proposal to PROCESSING. Returns null if
+// another request got there first, which is what blocks double refunds.
+export function claimPendingProposal(ticketId: string) {
+  return Ticket.findOneAndUpdate(
+    { _id: ticketId, "refundProposal.status": "PENDING" },
+    { $set: { "refundProposal.status": "PROCESSING" } },
+    { returnDocument: "after" }
+  );
+}
+
 export function createTicket(data: Partial<ITicket>) {
   return Ticket.create(data);
 }
 
 export function findTicketById(id: string) {
-  return Ticket.findById(id).populate("customer", "name email").populate("assignedAgent", "name email");
+  return Ticket.findById(id)
+    .populate("customer", "name email")
+    .populate("assignedAgent", "name email")
+    .populate("order")
+    .populate("refundProposal.createdBy", "name")
+    .populate("refundProposal.decidedBy", "name");
 }
 
 // Internal variant that skips populate — used when a service needs to

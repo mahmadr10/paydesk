@@ -6,8 +6,15 @@ import auditLogRoutes from "./auditLogRoutes";
 import dashboardRoutes from "./dashboardRoutes";
 import categoryRoutes from "./categoryRoutes";
 import notificationRoutes from "./notificationRoutes";
+import paymentRoutes from "./paymentRoutes";
+import disputeRoutes from "./disputeRoutes";
+import webhookRoutes from "./webhookRoutes";
 
 const router = Router();
+
+router.use("/webhooks", webhookRoutes); // no login: PayPal calls it, signature-verified
+router.use("/payments", paymentRoutes);
+router.use("/disputes", disputeRoutes);
 
 router.use("/auth", authRoutes);
 router.use("/tickets", ticketRoutes);

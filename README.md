@@ -1,199 +1,84 @@
-# ServiceDesk
+# PayDesk — AI co-pilot for PayPal sellers
 
-A production-grade multi-user support ticket platform. Customers submit
-requests; support agents triage, assign, and resolve them under SLA
-deadlines; administrators manage users, categories, SLA policies, and can
-inspect a full audit trail. Real-time updates push status/assignment
-changes to everyone watching a ticket, without a page refresh.
+Small online sellers lose money on PayPal disputes and refund requests: they answer too late, without evidence, or refund when they would have won. **PayDesk handles both with AI agents, and a human always approves before money moves.**
 
-**Full documentation:**
+- **Disputes arrive by PayPal webhook** → a case opens with PayPal's real response deadline → the **dispute agent** reads the dispute from PayPal, gathers evidence from the store's records (payment, delivery, download log, support history) and recommends **accept / partial-refund offer / contest**, with a win estimate, a drafted note and an evidence file → the seller clicks **Approve** → PayPal is answered through the Disputes API.
+- **Refund requests**: a buyer types their problem in plain words ("I was charged twice for the UI kit"). The AI finds the right PayPal payment and opens a case, and the **refund agent** checks the payment live in PayPal and proposes a full or partial refund, or asks for details → **Approve** → refund through the PayPal Payments API.
+- **Ask PayPal**: a chat over the seller's PayPal account, built on **PayPal's Agent Toolkit**, read-only by design.
 
-| Doc | Covers |
+## How PayPal is used
+
+| PayPal product / API | Used for |
 |---|---|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | System/component diagrams, data model, request lifecycle, auth flow |
-| [API.md](API.md) | Every endpoint, request/response shapes, error codes |
-| [SECURITY.md](SECURITY.md) | Auth model, threat mitigations, what's deliberately out of scope |
-| [TESTING.md](TESTING.md) | Test strategy and how to run each layer |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Docker, CI/CD, and deploying to a live host |
-| [DECISIONS.md](DECISIONS.md) | Why MongoDB, why JWT, why Socket.IO, etc. — alternatives considered |
-| [BUILD_LOG.md](BUILD_LOG.md) | Feature-by-feature build log: problem → approach → challenges → result |
+| **PayPal JS SDK** (Smart Buttons) | Buyer checkout in the demo store |
+| **PayPal Server SDK** (`@paypal/paypal-server-sdk`, APIMatic-generated) — Orders v2 | Create + capture orders (`OrdersController`) |
+| **PayPal Server SDK** — Payments v2 | Live capture lookup + refunds (`PaymentsController`), idempotent via `PayPal-Request-Id` |
+| **Disputes API v1** | Read disputes, accept claim, make offer, provide evidence (multipart), sandbox adjudicate |
+| **Webhooks** + `verify-webhook-signature` | `CUSTOMER.DISPUTE.*` events open and update cases. Every event is verified with PayPal and stored once (idempotent). |
+| **PayPal Agent Toolkit** (`@paypal/agent-toolkit`) | "Ask PayPal" chat tools: disputes, transactions, orders, refunds, invoices, insights (read-only) |
 
-## What was built
+The PayPal Server SDK integration was written with **APIMatic's Context Plugin for PayPal** (`paypaldev/server-sdk-context-plugin-preview`). Its TypeScript skills guided client setup (single long-lived `Client`, `clientCredentialsAuthCredentials`, `oAuthClockSkew`), named-argument calls, timeouts/retries (the SDK defaults to none) and `ApiError` handling. See `backend/src/services/paypalService.ts`.
 
-- **Auth**: register/login, short-lived JWT access tokens + rotating
-  httpOnly-cookie refresh tokens, logout revokes the refresh token
-  server-side.
-- **Roles**: Customer, Agent, Administrator — enforced at the API layer via
-  middleware, not just hidden in the UI.
-- **Tickets**: full CRUD, search, filter (status/priority/category/agent/tag/
-  date range), sort, and server-side pagination. Attachments (Multer,
-  type/size-restricted). Tags. A human-readable ticket number (`TCK-000123`).
-- **State machine**: a branching, role-aware workflow —
-  `OPEN → TRIAGED → ASSIGNED → IN_PROGRESS ⇄ WAITING_FOR_CUSTOMER`,
-  `IN_PROGRESS → RESOLVED → CLOSED`, with `CLOSED → OPEN` reopening. Illegal
-  transitions return a structured `INVALID_STATUS_TRANSITION` error, never a
-  silent no-op.
-- **SLA engine**: per-priority response/resolution deadlines, computed at
-  ticket creation from admin-configurable policies; live "remaining time" /
-  breach status, computed on every read (never stored stale).
-- **Audit log**: every mutating action (create, status change, priority
-  change, assignment, comment, category/SLA-policy edits) recorded with
-  actor/action/entity/entityId/oldValue/newValue/timestamp — inspectable by
-  admins.
-- **Dashboard & analytics**: totals, SLA breach count, average resolution
-  time, and bar charts (tickets by status/priority/category/agent), backed
-  by MongoDB aggregation pipelines.
-- **Real-time**: Socket.IO, JWT-authenticated at connection time. A
-  customer's own ticket updates live; agents/admins share a room so
-  reassignment is visible without a refresh.
-- **AI Assist**: an Agent/Admin-only "Analyze with AI" action on the ticket
-  detail page — a real LangGraph pipeline (parallel `classify`/`summarize`
-  branches fan into a `draftResponse` step) backed by Groq, generating a
-  summary, suggested category/priority, and a draft first reply. No
-  `GROQ_API_KEY`? It automatically falls back to a deterministic mock
-  analyzer — the whole app, including this feature, runs with zero API key.
-  Implemented as a replaceable service abstraction (`services/aiService.ts`)
-  — nothing outside that one file knows LangGraph or Groq exist. Details:
-  [ARCHITECTURE.md](ARCHITECTURE.md#ai-assist).
-- **AI Dev Assistant**: a second, separate AI feature — an internal
-  developer tool (Admin-only) at `/admin/dev-assistant`. Ask a question
-  about the codebase ("Why are ticket updates sometimes duplicated?") and a
-  LangGraph orchestrator plans which read-only specialist agents are
-  relevant (repo search, git history, recent logs, the real test suite),
-  runs them, synthesizes a diagnosis, and — when it's genuinely confident —
-  proposes a specific code fix as a real diff. The investigation graph
-  itself never writes anything (no write/patch tool exists in its tool set,
-  a structural boundary, not a prompt instruction); applying a proposed fix
-  is a completely separate, human-triggered step that immediately re-runs
-  the real test suite and auto-reverts the file if it fails. Live agent
-  progress (including "applying + testing…") streams over Socket.IO as it
-  happens. Same mock fallback principle — runs with zero API key ("suggest
-  a fix" simply doesn't happen in mock mode). Verified live end-to-end
-  against a real planted bug, through the actual browser UI, not just
-  unit-tested. Details: [ARCHITECTURE.md](ARCHITECTURE.md#ai-dev-assistant).
-- **Background jobs**: a `node-cron` job (every minute) scans for tickets
-  that just breached their SLA deadline while still active, and pushes a
-  persisted notification (a real `notifications` collection, not just an
-  in-the-moment Socket.IO event) + live update to the assigned agent (or
-  every admin, if unassigned) — a notification bell in the navbar shows the
-  unread count and updates live. Manually triggerable
-  (`POST /admin/jobs/sla-check/run`) for on-demand use. Details:
-  [ARCHITECTURE.md](ARCHITECTURE.md#background-jobs).
-- **Validation**: Zod on every request body/params/query, both ends.
-- **Security**: password hashing (bcrypt), rate limiting, Helmet security
-  headers, centralized error handling (no stack traces to the client),
-  file-upload restrictions. Details in [SECURITY.md](SECURITY.md).
-- **Observability**: structured JSON logging (Pino) with request ids,
-  method/route/status/duration/userId on every request; errors correlate to
-  logs via a `requestId` in the response. **OpenTelemetry** auto-instruments
-  HTTP/Express/MongoDB, plus explicit spans around the Service layer, so a
-  request traces `HTTP → Route → Service → MongoDB` end to end; a Prometheus
-  metrics endpoint (`/metrics`) ships alongside it. Zero setup required
-  (traces print to the console, no collector needed) — or point it at Jaeger
-  (bundled in `docker compose up`, UI at http://localhost:16686) for a real
-  trace waterfall. Details: [ARCHITECTURE.md](ARCHITECTURE.md#observability).
-- **Testing**: Vitest unit tests (state machine, SLA math), Supertest
-  integration tests (real HTTP against a real in-memory MongoDB), and a
-  Playwright E2E suite driving a real browser through the full ticket
-  lifecycle. See [TESTING.md](TESTING.md).
-- **CI**: GitHub Actions — install → lint → typecheck → test → build, on
-  every PR and push to `main`.
-- **Docker**: Dockerfiles for both halves + a `docker-compose.yml` that runs
-  the whole stack (including a local MongoDB) with one command.
+## How AI is used (and kept safe)
 
-## Project structure
+Both agents are **LangGraph** pipelines on **Groq** (`openai/gpt-oss-120b`):
 
 ```
-backend/    Node + Express + TypeScript API (controller -> service -> repository -> model)
-frontend/   React + TypeScript + Vite, TanStack Query + React Hook Form
-e2e/        Playwright end-to-end tests (drives both halves together)
+gather facts (PayPal API + records) → AI decision → policy guard (code) → draft reply → PROPOSAL → human Approve → PayPal
 ```
 
-## Running it locally
+- **Policy guard** is plain code the AI can't argue with. It enforces the refund window, never refunds more than is left, blocks contesting "not received" without download proof, only uses actions PayPal currently allows, and holds refunds for customers with 3+ refunds in 90 days (abuse check).
+- **Evidence files are built from records by code, never written by the AI**, so the agent can't invent evidence.
+- **Approve is atomic** (PENDING → PROCESSING claim): a double-click can't refund twice.
+- Customers never see the agent's internal reasoning.
+- No Groq key? The same graphs run with rule-based decisions.
 
-### Option A — Docker (one command)
+## Run it locally (about 2 minutes)
 
-```bash
-docker compose up
-```
+Needs Node 20+. No database or PayPal account required for a first look.
 
-Frontend: http://localhost:8080 · Backend: http://localhost:4000 · a local
-MongoDB is included, no Atlas account needed. Override any setting via a
-root `.env` — see [.env.example](.env.example).
-
-> Note: this was written and typechecked/reviewed carefully but not run
-> end-to-end in this environment (Docker wasn't available where this was
-> built) — do a `docker compose up` verification pass before relying on it.
-
-### Option B — run each half directly
-
-**1. MongoDB Atlas** (or any MongoDB instance): create a free cluster at
-https://cloud.mongodb.com, get its connection string. Steps in
-[DEPLOYMENT.md](DEPLOYMENT.md#mongodb-atlas-setup).
-
-**2. Backend:**
 ```bash
 cd backend
-cp .env.example .env   # paste your MONGODB_URI, set a JWT_ACCESS_SECRET
+cp .env.example .env      # set MONGODB_URI=memory, JWT_ACCESS_SECRET=anything-long, GROQ_API_KEY=... (optional)
 npm install
-npm run dev
+npm run dev               # http://localhost:4000
 ```
-Runs on http://localhost:4000. First boot auto-seeds default categories and
-SLA policies. Optionally seed demo accounts: `npm run seed:users` (3
-accounts, one per role — credentials printed to the console), then
-`npm run seed:demo` for a curated spread of ~15 realistic tickets across
-every status/priority/category (distinct from `npm run seed:perf`'s 10,000
-random rows, which exist for query benchmarking, not for a dashboard that
-looks like anything before you've clicked a single button).
 
-**3. Frontend:**
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev               # http://localhost:5173
 ```
-Runs on http://localhost:5173.
 
-**4. Try it:** register a Customer and an Agent (two browser profiles or one
-incognito). Customer creates a ticket → Agent triages, assigns to self,
-progresses it → both sides watch it update live → Customer closes it.
+1. Register a **Buyer** (role Customer) → **Shop** → buy something → **My orders** → Download → **Open PayPal dispute**.
+2. Register a **Seller** (role Agent) in another browser profile → **Co-pilot** shows the dispute and the agent's recommendation → open it → **Approve**.
+3. Try **My orders → "Problem with an order?"** as the buyer for the refund agent, and **Ask PayPal** as the seller.
 
-## Environment variables
+Without PayPal keys a built-in simulator stands in for PayPal (the UI says so). The simulated disputes and webhooks follow the same code path as real ones.
 
-See `backend/.env.example`, `frontend/.env.example`, and root
-`.env.example` (Docker overrides). Full reference in
-[DEPLOYMENT.md](DEPLOYMENT.md#environment-variables).
+### With the real PayPal sandbox
 
-## Running tests
+1. developer.paypal.com → Apps & Credentials → Sandbox → create an app → put the Client ID and Secret in `backend/.env`.
+2. Buy from the shop with a **sandbox personal account** (Smart Buttons appear automatically).
+3. Open a dispute as that buyer on **sandbox.paypal.com** → Activity → the payment → Report a problem.
+4. Webhooks: deploy the backend (e.g. Render, `render.yaml` included), add a webhook to your sandbox app pointing to `https://<backend>/api/v1/webhooks/paypal` for `CUSTOMER.DISPUTE.*`, and set `PAYPAL_WEBHOOK_ID`. Locally, use **Sync disputes from PayPal** on the dashboard instead.
+
+## Tests
 
 ```bash
-cd backend  && npm test    # unit + integration (Vitest + Supertest, in-memory MongoDB)
-cd e2e      && npm test    # Playwright E2E (starts both servers itself)
+cd backend && npm test    # 62 tests: unit + integration (real HTTP, in-memory MongoDB)
 ```
 
-Details, including how to demonstrate a failing → passing CI run, in
-[TESTING.md](TESTING.md).
+These cover buy → capture → smart intake → duplicate detection → approve → refund → resolved; dispute → evidence → contest → adjudication; the policy guard; double-approve protection; and cross-customer access.
 
-## Performance
+## Stack
 
-```bash
-cd backend
-npm run seed:perf    # generates 10,000 tickets
-npm run benchmark    # measures one real query with/without its index
-```
+React + TypeScript + Vite + Tailwind · Node + Express + TypeScript · MongoDB (Mongoose) · Socket.IO live updates · LangGraph + Groq · PayPal Server SDK, Disputes API, Webhooks, JS SDK, Agent Toolkit · Vitest + Supertest · Docker + Render.
 
-Real measured results and the optimization story: [BUILD_LOG.md](BUILD_LOG.md#performance-pass).
+## What was built during the hackathon
 
-## What was intentionally left out of scope, and why
+PayDesk is built on our earlier support-desk project (auth, roles, case workflow, audit log, live updates; see `ARCHITECTURE.md`). Everything PayPal- and agent-related was built during the hackathon (Oct–Nov 2026): the store + checkout, PayPal Server SDK integration, disputes + webhooks, both AI agents with policy guards and approval flow, smart intake, the Agent Toolkit assistant, and the seller co-pilot UI.
 
-**Not built at all**, as genuinely out of scope for this exercise: a
-Grafana dashboard on top of the Prometheus metrics endpoint (the endpoint
-itself exists — wiring an actual Grafana instance to it is one
-`docker-compose` service away, not done here), and an actual live
-production deployment (prepared — Docker + CI are deploy-ready — but not
-executed, since it needs accounts on a hosting platform that only the
-project owner can create).
+## License
 
-**Deliberately simplified**: no email/Slack notifications (Socket.IO covers
-the real-time requirement), no in-app file preview (download only), no
-granular per-field permission system beyond the three roles.
+MIT, see [LICENSE](LICENSE).

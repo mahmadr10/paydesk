@@ -11,6 +11,7 @@ import { logAction } from "./auditLogService";
 import { withSpan } from "../observability/otel";
 import { analyzeTicket as runAiAnalysis } from "./aiService";
 import { listActiveCategories } from "../repositories/categoryRepository";
+import { Order } from "../models/Order";
 
 // ── The state machine ──────────────────────────────────────────────────
 // Unlike the earlier linear version, this graph BRANCHES: an IN_PROGRESS
@@ -112,6 +113,19 @@ export async function createTicket(customerId: string, input: CreateTicketInput)
         throw new AppError(400, "INVALID_CATEGORY", `Unknown or inactive category: ${input.category}`);
       }
 
+      // A ticket can be about one of the customer's own paid orders.
+      let orderId: string | null = null;
+      if (input.orderId) {
+        const order = await Order.findById(input.orderId);
+        if (!order || order.customer.toString() !== customerId) {
+          throw new AppError(400, "INVALID_ORDER", "That order doesn't exist or isn't yours.");
+        }
+        if (order.status === "CREATED") {
+          throw new AppError(400, "INVALID_ORDER", "That order was never paid.");
+        }
+        orderId = order._id.toString();
+      }
+
       const { responseMinutes, resolutionMinutes } = await getSlaMinutesForPriority(input.priority);
       const now = new Date();
       const ticketNumber = await ticketRepo.nextTicketNumber();
@@ -130,6 +144,7 @@ export async function createTicket(customerId: string, input: CreateTicketInput)
         resolutionDeadline: addMinutes(now, resolutionMinutes),
         firstResponseAt: null,
         resolvedAt: null,
+        order: orderId as any,
       });
 
       await logAction({
@@ -191,7 +206,11 @@ export async function getTicketById(ticketId: string, user: JwtPayload) {
   const ticket = await ticketRepo.findTicketById(ticketId);
   if (!ticket) throw new AppError(404, "NOT_FOUND", "Ticket not found.");
   assertCanView(ticket, user);
-  return Object.assign(withSla(ticket), { allowedNextStatuses: getAllowedNextStatuses(ticket, user) });
+  const result = Object.assign(withSla(ticket), { allowedNextStatuses: getAllowedNextStatuses(ticket, user) });
+  // The refund agent's reasoning is internal staff tooling. Customers only
+  // ever see the reply that staff actually sends them.
+  if (user.role === "CUSTOMER") (result as any).refundProposal = null;
+  return result;
 }
 
 export async function updateTicketStatus(ticketId: string, requestedStatus: TicketStatus, user: JwtPayload) {

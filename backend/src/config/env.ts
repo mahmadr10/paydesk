@@ -44,6 +44,20 @@ const envSchema = z.object({
   // and in the E2E harness (nothing there depends on it, and a cron ticking
   // during a short-lived test run is just noise).
   JOBS_ENABLED: z.enum(["true", "false"]).default("true"),
+
+  // PayPal (sandbox). Both keys come from developer.paypal.com -> Apps &
+  // Credentials -> Sandbox. Leave them unset and the app runs a simulated
+  // PayPal so it still works end to end without an account.
+  PAYPAL_CLIENT_ID: z.string().optional(),
+  PAYPAL_CLIENT_SECRET: z.string().optional(),
+  PAYPAL_API_BASE: z.string().default("https://api-m.sandbox.paypal.com"),
+  PAYPAL_CURRENCY: z.string().default("USD"),
+  // Webhook id from developer.paypal.com (your app -> Webhooks). Needed to
+  // verify that incoming webhook calls really come from PayPal.
+  PAYPAL_WEBHOOK_ID: z.string().optional(),
+
+  // Refund policy the AI agent is checked against (not just told about).
+  REFUND_WINDOW_DAYS: z.coerce.number().int().positive().default(30),
 });
 
 const parsed = envSchema.safeParse(process.env);

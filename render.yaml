@@ -34,3 +34,9 @@ services:
         value: "true"
       - key: GROQ_API_KEY
         sync: false # optional — omit entirely to run the AI features' mock fallback in production
+      - key: PAYPAL_CLIENT_ID
+        sync: false # sandbox app client id (developer.paypal.com)
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false # from your sandbox app's Webhooks section

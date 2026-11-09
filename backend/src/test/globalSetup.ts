@@ -6,7 +6,9 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 // server here instead of mocking the database, so integration tests
 // exercise the actual Mongoose queries/indexes/validation, not a fake.
 export default async function setup() {
-  const mongod = await MongoMemoryServer.create();
+  // Generous timeout: the first launch on Windows can be slow while the
+  // antivirus scans the freshly downloaded mongod binary.
+  const mongod = await MongoMemoryServer.create({ instance: { launchTimeout: 60000 } });
 
   process.env.NODE_ENV = "test";
   process.env.MONGODB_URI = mongod.getUri("servicedesk_test");

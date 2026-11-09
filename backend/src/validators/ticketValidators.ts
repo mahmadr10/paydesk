@@ -7,6 +7,10 @@ export const createTicketSchema = z.object({
   category: z.string().trim().min(1, "Category is required"),
   priority: z.enum(TICKET_PRIORITIES),
   tags: z.array(z.string().trim().min(1)).max(10).default([]),
+  orderId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, "Invalid order id")
+    .optional(),
 });
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 

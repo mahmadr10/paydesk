@@ -1,0 +1,113 @@
+import { PayPalAgentToolkit } from "@paypal/agent-toolkit/openai";
+import { env } from "../config/env";
+import { Order } from "../models/Order";
+import { Ticket } from "../models/Ticket";
+import { AppError } from "../utils/AppError";
+import { paypalMode } from "./paypalService";
+
+// "Ask PayPal" chat for the seller, powered by PayPal's official Agent
+// Toolkit (@paypal/agent-toolkit). The toolkit gives the LLM PayPal API
+// tools; we enable READ-ONLY ones only. Anything that moves money goes
+// through the agent proposal + human approval flow instead.
+//
+// The LLM is Groq (OpenAI-compatible API), driven by a small tool loop.
+// In simulated mode (no PayPal keys) the same loop uses local look-alike
+// tools over our own database, so the chat still works in a demo.
+
+type ToolCall = { id: string; type: "function"; function: { name: string; arguments: string } };
+type Msg = { role: string; content: string | null; tool_calls?: ToolCall[]; tool_call_id?: string };
+
+let toolkit: PayPalAgentToolkit | null = null;
+function paypalToolkit() {
+  if (!toolkit) {
+    toolkit = new PayPalAgentToolkit({
+      clientId: env.PAYPAL_CLIENT_ID!,
+      clientSecret: env.PAYPAL_CLIENT_SECRET!,
+      configuration: {
+        actions: {
+          disputes: { list: true, get: true },
+          transactions: { list: true },
+          orders: { get: true },
+          payments: { getRefunds: true },
+          invoices: { list: true, get: true },
+          insights: { get: true },
+        },
+        context: { sandbox: !env.PAYPAL_API_BASE.includes("api-m.paypal.com") },
+      },
+    });
+  }
+  return toolkit;
+}
+
+// Simulated-mode tools with the same names the toolkit uses.
+const localTools = [
+  { type: "function", function: { name: "list_disputes", description: "List PayPal disputes with status and amount", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "list_transactions", description: "List recent PayPal payments (orders) with status and refunds", parameters: { type: "object", properties: {} } } },
+];
+
+async function runLocalTool(name: string): Promise<string> {
+  if (name === "list_disputes") {
+    const cases = await Ticket.find({ dispute: { $ne: null } }).sort({ createdAt: -1 }).limit(25);
+    return JSON.stringify(cases.map((c) => ({ dispute_id: c.dispute!.disputeId, reason: c.dispute!.reason, status: c.dispute!.status, stage: c.dispute!.stage, amount: c.dispute!.amount, currency: c.dispute!.currency, seller_response_due: c.dispute!.sellerResponseDue, case: c.ticketNumber })));
+  }
+  if (name === "list_transactions") {
+    const orders = await Order.find({ status: { $ne: "CREATED" } }).sort({ paidAt: -1 }).limit(25);
+    return JSON.stringify(orders.map((o) => ({ order: o.orderNumber, capture_id: o.captureId, amount: o.total, currency: o.currency, status: o.status, refunded: o.refundedTotal, paid_at: o.paidAt, items: o.items.map((i) => i.name) })));
+  }
+  return JSON.stringify({ error: "unknown tool" });
+}
+
+async function groqChat(messages: Msg[], tools: unknown[]) {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.GROQ_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: env.AI_MODEL, messages, tools, tool_choice: "auto", temperature: 0.2 }),
+  });
+  if (!res.ok) throw new AppError(502, "AI_ERROR", `The AI service returned ${res.status}.`);
+  const json = (await res.json()) as any;
+  return json.choices[0].message as Msg;
+}
+
+export async function askAssistant(question: string, history: { role: "user" | "assistant"; content: string }[]) {
+  if (!env.GROQ_API_KEY || env.AI_ENABLED !== "true") {
+    throw new AppError(400, "AI_DISABLED", "Add a GROQ_API_KEY to use the assistant.");
+  }
+  const live = paypalMode() === "sandbox";
+  const tools = live ? paypalToolkit().getTools() : localTools;
+
+  const messages: Msg[] = [
+    {
+      role: "system",
+      content:
+        "You are PayDesk's assistant for a small online seller. Answer questions about their PayPal business using the tools " +
+        "(disputes, transactions, orders, refunds, invoices, insights). Always call a tool for facts; never guess numbers. " +
+        "Keep answers short and practical: plain text with simple '-' bullets, no markdown tables, no bold. Include amounts with currency. " +
+        "You can only read data. If asked to refund or respond to a dispute, say to open the case and approve the agent's proposal. " +
+        `Today is ${new Date().toISOString().slice(0, 10)}.`,
+    },
+    ...history.slice(-6).map((h) => ({ role: h.role, content: h.content })),
+    { role: "user", content: question },
+  ];
+
+  const toolsUsed: string[] = [];
+  for (let step = 0; step < 6; step++) {
+    const reply = await groqChat(messages, tools as unknown[]);
+    messages.push(reply);
+    if (!reply.tool_calls?.length) {
+      return { answer: reply.content ?? "", toolsUsed, source: live ? "paypal-agent-toolkit" : "simulated" };
+    }
+    for (const call of reply.tool_calls) {
+      toolsUsed.push(call.function.name);
+      let content: string;
+      try {
+        content = live
+          ? String((await paypalToolkit().handleToolCall(call as any)).content)
+          : await runLocalTool(call.function.name);
+      } catch (err) {
+        content = JSON.stringify({ error: err instanceof Error ? err.message : "tool failed" });
+      }
+      messages.push({ role: "tool", tool_call_id: call.id, content: content.slice(0, 8000) });
+    }
+  }
+  return { answer: "That took too many steps. Try a more specific question.", toolsUsed, source: live ? "paypal-agent-toolkit" : "simulated" };
+}

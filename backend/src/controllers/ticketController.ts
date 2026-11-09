@@ -1,12 +1,37 @@
 import { Request, Response } from "express";
 import path from "path";
 import * as ticketService from "../services/ticketService";
+import * as refundService from "../services/refundService";
+import * as intakeService from "../services/intakeService";
 import { AppError } from "../utils/AppError";
 import { UPLOAD_DIR } from "../middleware/upload";
 
 export async function createTicket(req: Request, res: Response) {
   const ticket = await ticketService.createTicket(req.user!.userId, req.body);
+  // Ticket about a PayPal order: start the refund agent right away.
+  if (ticket.order) refundService.runAgentInBackground(String(ticket._id));
   res.status(201).json({ success: true, data: { ticket } });
+}
+
+export async function smartIntake(req: Request, res: Response) {
+  const result = await intakeService.smartIntake(req.user!.userId, req.body.message);
+  res.status(201).json({ success: true, data: result });
+}
+
+export async function runRefundAgent(req: Request, res: Response) {
+  await refundService.runAgent(req.params.id as string, req.user!);
+  const ticket = await ticketService.getTicketById(req.params.id as string, req.user!);
+  res.json({ success: true, data: { ticket } });
+}
+
+export async function approveRefundProposal(req: Request, res: Response) {
+  const ticket = await refundService.approveProposal(req.params.id as string, req.user!, req.body);
+  res.json({ success: true, data: { ticket } });
+}
+
+export async function rejectRefundProposal(req: Request, res: Response) {
+  const ticket = await refundService.rejectProposal(req.params.id as string, req.user!, req.body.note);
+  res.json({ success: true, data: { ticket } });
 }
 
 export async function listTickets(req: Request, res: Response) {

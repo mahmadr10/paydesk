@@ -17,5 +17,8 @@ export default defineConfig({
     // database just to import the app.
     globalSetup: "./src/test/globalSetup.ts",
     testTimeout: 20000,
+    // All files share one test database and each drops it when done, so
+    // run files one after another (tests inside a file still run in order).
+    fileParallelism: false,
   },
 });

@@ -14,12 +14,45 @@ import {
   mongoIdParamSchema,
 } from "../validators/ticketValidators";
 import { createCommentSchema } from "../validators/commentValidators";
+import { approveProposalSchema, rejectProposalSchema, smartIntakeSchema } from "../validators/paymentValidators";
+import { aiLimiter } from "../middleware/rateLimit";
 
 const router = Router();
 
 router.use(requireAuth);
 
 router.post("/", requireRole("CUSTOMER"), validate(createTicketSchema), ticketController.createTicket);
+// "Describe your problem" box: AI picks the order and opens the ticket.
+router.post(
+  "/smart-intake",
+  requireRole("CUSTOMER"),
+  aiLimiter,
+  validate(smartIntakeSchema),
+  ticketController.smartIntake
+);
+
+// Refund agent (staff only). Running it moves no money; only approve does.
+router.post(
+  "/:id/refund-agent",
+  requireRole("AGENT", "ADMIN"),
+  aiLimiter,
+  validate(mongoIdParamSchema, "params"),
+  ticketController.runRefundAgent
+);
+router.post(
+  "/:id/refund-proposal/approve",
+  requireRole("AGENT", "ADMIN"),
+  validate(mongoIdParamSchema, "params"),
+  validate(approveProposalSchema),
+  ticketController.approveRefundProposal
+);
+router.post(
+  "/:id/refund-proposal/reject",
+  requireRole("AGENT", "ADMIN"),
+  validate(mongoIdParamSchema, "params"),
+  validate(rejectProposalSchema),
+  ticketController.rejectRefundProposal
+);
 router.get("/", validate(listTicketsQuerySchema, "query"), ticketController.listTickets);
 router.get("/:id", validate(mongoIdParamSchema, "params"), ticketController.getTicket);
 

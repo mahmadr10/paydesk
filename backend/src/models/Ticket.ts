@@ -69,9 +69,153 @@ export interface ITicket extends Document {
   responseBreachNotified: boolean;
   resolutionBreachNotified: boolean;
 
+  // The PayPal order this ticket is about (optional).
+  order: Types.ObjectId | null;
+  // Latest proposal from the AI refund agent. Stored (not recomputed) so
+  // that "Approve" executes exactly what the agent saw and proposed.
+  refundProposal: IRefundProposal | null;
+
+  // Set when this case was opened by a PayPal dispute (webhook or sync).
+  dispute: ITicketDispute | null;
+  disputeProposal: IDisputeProposal | null;
+
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Our copy of a PayPal dispute, refreshed from PayPal on every webhook/sync.
+export interface ITicketDispute {
+  disputeId: string;
+  reason: string;
+  status: string;
+  stage: string;
+  amount: number;
+  currency: string;
+  sellerResponseDue: Date | null;
+  transactionId: string | null;
+  buyerName: string | null;
+  messages: { postedBy: string; time: string; content: string }[];
+  outcome: { code: string; amountRefunded: number | null } | null;
+  actions: string[];
+  raw: Record<string, unknown>; // full PayPal JSON (also used to restore the simulator)
+  lastSyncedAt: Date;
+}
+
+export const DISPUTE_ACTIONS = ["ACCEPT_CLAIM", "MAKE_OFFER", "CONTEST", "NONE"] as const;
+
+export interface IDisputeProposal {
+  status: "PENDING" | "PROCESSING" | "EXECUTED" | "REJECTED" | "FAILED";
+  action: (typeof DISPUTE_ACTIONS)[number];
+  amount: number; // refund/offer amount (0 for CONTEST/NONE)
+  currency: string;
+  winChance: number; // agent's estimate that contesting would win, 0..1
+  reasoning: string;
+  policyNotes: string[];
+  responseNote: string; // what we send to PayPal / the buyer
+  evidenceText: string; // evidence file contents (CONTEST only), built from real records
+  facts: Record<string, unknown>;
+  steps: { name: string; detail: string }[];
+  source: "groq" | "rules";
+  createdBy: Types.ObjectId | null;
+  createdAt: Date;
+  decidedBy: Types.ObjectId | null;
+  decidedAt: Date | null;
+  error: string | null;
+}
+
+const disputeSchema = new Schema<ITicketDispute>(
+  {
+    disputeId: { type: String, required: true },
+    reason: String,
+    status: String,
+    stage: String,
+    amount: Number,
+    currency: String,
+    sellerResponseDue: { type: Date, default: null },
+    transactionId: { type: String, default: null },
+    buyerName: { type: String, default: null },
+    messages: { type: [{ postedBy: String, time: String, content: String, _id: false }], default: [] },
+    outcome: { type: Schema.Types.Mixed, default: null },
+    actions: { type: [String], default: [] },
+    raw: { type: Schema.Types.Mixed, default: {} },
+    lastSyncedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
+const disputeProposalSchema = new Schema<IDisputeProposal>(
+  {
+    status: { type: String, enum: ["PENDING", "PROCESSING", "EXECUTED", "REJECTED", "FAILED"], required: true },
+    action: { type: String, enum: DISPUTE_ACTIONS, required: true },
+    amount: { type: Number, default: 0 },
+    currency: { type: String, required: true },
+    winChance: { type: Number, default: 0 },
+    reasoning: { type: String, default: "" },
+    policyNotes: { type: [String], default: [] },
+    responseNote: { type: String, default: "" },
+    evidenceText: { type: String, default: "" },
+    facts: { type: Schema.Types.Mixed, default: {} },
+    steps: { type: [{ name: String, detail: String, _id: false }], default: [] },
+    source: { type: String, enum: ["groq", "rules"], required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    createdAt: { type: Date, default: Date.now },
+    decidedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    decidedAt: { type: Date, default: null },
+    error: { type: String, default: null },
+  },
+  { _id: false }
+);
+
+export const REFUND_PROPOSAL_STATUSES = ["PENDING", "PROCESSING", "EXECUTED", "SENT", "REJECTED", "FAILED"] as const;
+
+export interface IRefundProposal {
+  status: (typeof REFUND_PROPOSAL_STATUSES)[number];
+  issueType: string;
+  action: string;
+  amount: number;
+  currency: string;
+  reasoning: string;
+  confidence: number;
+  policyNotes: string[];
+  customerReply: string;
+  facts: Record<string, unknown>;
+  steps: { name: string; detail: string }[];
+  source: "groq" | "rules";
+  paypalMode: "sandbox" | "simulated";
+  createdBy: Types.ObjectId | null; // null = run automatically by the system
+  createdAt: Date;
+  decidedBy: Types.ObjectId | null;
+  decidedAt: Date | null;
+  executedAmount: number | null;
+  paypalRefundId: string | null;
+  error: string | null;
+}
+
+const refundProposalSchema = new Schema<IRefundProposal>(
+  {
+    status: { type: String, enum: REFUND_PROPOSAL_STATUSES, required: true },
+    issueType: { type: String, required: true },
+    action: { type: String, required: true },
+    amount: { type: Number, required: true },
+    currency: { type: String, required: true },
+    reasoning: { type: String, default: "" },
+    confidence: { type: Number, default: 0 },
+    policyNotes: { type: [String], default: [] },
+    customerReply: { type: String, default: "" },
+    facts: { type: Schema.Types.Mixed, default: {} },
+    steps: { type: [{ name: String, detail: String, _id: false }], default: [] },
+    source: { type: String, enum: ["groq", "rules"], required: true },
+    paypalMode: { type: String, enum: ["sandbox", "simulated"], required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    createdAt: { type: Date, default: Date.now },
+    decidedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    decidedAt: { type: Date, default: null },
+    executedAmount: { type: Number, default: null },
+    paypalRefundId: { type: String, default: null },
+    error: { type: String, default: null },
+  },
+  { _id: false }
+);
 
 const ticketSchema = new Schema<ITicket>(
   {
@@ -91,9 +235,16 @@ const ticketSchema = new Schema<ITicket>(
     resolvedAt: { type: Date, default: null },
     responseBreachNotified: { type: Boolean, default: false },
     resolutionBreachNotified: { type: Boolean, default: false },
+    order: { type: Schema.Types.ObjectId, ref: "Order", default: null, index: true },
+    refundProposal: { type: refundProposalSchema, default: null },
+    dispute: { type: disputeSchema, default: null },
+    disputeProposal: { type: disputeProposalSchema, default: null },
   },
   { timestamps: true }
 );
+
+// One case per PayPal dispute (webhooks can arrive more than once).
+ticketSchema.index({ "dispute.disputeId": 1 }, { unique: true, partialFilterExpression: { "dispute.disputeId": { $type: "string" } } });
 
 // Compound indexes for the query patterns the ticket queue/dashboard
 // actually run: "an agent's queue filtered by status, newest first" and

@@ -17,6 +17,9 @@ import {
 import { downloadAttachment } from "../api/tickets";
 import { getApiErrorMessage } from "../api/client";
 import { TICKET_PRIORITIES, type TicketPriority, type User } from "../types";
+import { useQuery } from "@tanstack/react-query";
+import { getPaymentsConfig, type PayTicket } from "../api/paydesk";
+import { DisputePanel, OrderCard, RefundAgentPanel } from "../components/PayPanels";
 
 export function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -34,10 +37,12 @@ export function TicketDetailPage() {
   const [commentText, setCommentText] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const { data: config } = useQuery({ queryKey: ["payments-config"], queryFn: getPaymentsConfig, staleTime: Infinity });
 
   if (isLoading) return <p className="mt-8 text-center text-sm text-slate-500">Loading…</p>;
   if (error || !ticket) return <p className="mt-8 text-center text-sm text-red-600">{getApiErrorMessage(error)}</p>;
 
+  const payTicket = ticket as PayTicket;
   const customer = ticket.customer as User;
   const agent = ticket.assignedAgent as User | null;
   const isStaff = user?.role === "AGENT" || user?.role === "ADMIN";
@@ -70,7 +75,7 @@ export function TicketDetailPage() {
   }
 
   return (
-    <div className="mx-auto mt-8 max-w-2xl">
+    <div className="mx-auto mt-8 max-w-4xl">
       <div className="rounded-lg border border-slate-200 bg-white p-6">
         <div className="mb-1 flex items-center justify-between">
           <h1 className="text-xl font-semibold text-slate-800">{ticket.title}</h1>
@@ -173,6 +178,10 @@ export function TicketDetailPage() {
 
         {actionError && <p className="mt-3 text-sm text-red-600">{actionError}</p>}
       </div>
+
+      {payTicket.dispute && isStaff && <DisputePanel ticket={payTicket} mode={config?.mode} />}
+      {payTicket.order && typeof payTicket.order === "object" && <OrderCard order={payTicket.order} />}
+      {isStaff && payTicket.order && !payTicket.dispute && <RefundAgentPanel ticket={payTicket} />}
 
       {/* AI Assist — staff-only triage tooling (suggested priority/category,
           a draft reply). Not shown to customers: this is internal-facing

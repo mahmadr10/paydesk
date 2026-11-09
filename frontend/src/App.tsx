@@ -12,6 +12,7 @@ import { MyTicketsPage } from "./pages/MyTicketsPage";
 import { TicketQueuePage } from "./pages/TicketQueuePage";
 import { TicketDetailPage } from "./pages/TicketDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { AssistantPage, MyOrdersPage, SellerDashboardPage, ShopPage } from "./pages/PayDeskPages";
 
 // Charts (recharts) and the admin screens are the heaviest, least-often-hit
 // part of the bundle — a customer or agent who never opens Analytics
@@ -31,16 +32,11 @@ function PageFallback() {
 // The "home" route ("/") shows a different page per role — a customer's own
 // tickets, an agent's queue, or the admin dashboard. One URL, three
 // components, decided by who's logged in.
+// PayDesk: sellers (agent/admin) land on the co-pilot, buyers on their orders.
 function Home() {
   const { user } = useAuth();
-  if (user?.role === "AGENT") return <TicketQueuePage />;
-  if (user?.role === "ADMIN")
-    return (
-      <Suspense fallback={<PageFallback />}>
-        <DashboardPage />
-      </Suspense>
-    );
-  return <MyTicketsPage />;
+  if (user?.role === "AGENT" || user?.role === "ADMIN") return <SellerDashboardPage />;
+  return <MyOrdersPage />;
 }
 
 function AppRoutes() {
@@ -61,6 +57,11 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="/shop" element={<ProtectedRoute roles={["CUSTOMER"]}><ShopPage /></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute roles={["CUSTOMER"]}><MyOrdersPage /></ProtectedRoute>} />
+        <Route path="/my-tickets" element={<ProtectedRoute roles={["CUSTOMER"]}><MyTicketsPage /></ProtectedRoute>} />
+        <Route path="/queue" element={<ProtectedRoute roles={["AGENT", "ADMIN"]}><TicketQueuePage /></ProtectedRoute>} />
+        <Route path="/assistant" element={<ProtectedRoute roles={["AGENT", "ADMIN"]}><AssistantPage /></ProtectedRoute>} />
         <Route
           path="/dashboard"
           element={

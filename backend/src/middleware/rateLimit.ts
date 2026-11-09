@@ -35,6 +35,19 @@ export const authLimiter = rateLimit({
   },
 });
 
+// Refund agent + smart intake each make a few LLM calls (and a PayPal call),
+// so they get their own, tighter budget.
+export const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: isTestEnv,
+  handler: () => {
+    throw new AppError(429, "RATE_LIMITED", "Too many AI requests. Please wait a few minutes.");
+  },
+});
+
 // The AI Dev Assistant can trigger multiple LLM calls AND a real test suite
 // run (~10-15s) per question — genuinely expensive compared to a normal CRUD
 // request, so this is deliberately tighter than the general limiter even
