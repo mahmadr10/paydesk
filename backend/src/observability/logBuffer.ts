@@ -1,8 +1,8 @@
-// An in-memory ring buffer of recent log lines — what gives the AI Dev
+// An in-memory ring buffer of recent log lines - what gives the AI Dev
 // Assistant's Log Agent (see ai/devAssistant/) something REAL to search,
 // without standing up a log file / log aggregator just for this. Capped at
 // a fixed size so a busy server can't leak memory here; oldest entries
-// silently fall off once full. Process-local and lost on restart — this is
+// silently fall off once full. Process-local and lost on restart - this is
 // a debugging convenience, not a durable audit trail (that's AuditLog, a
 // real Mongo collection, for actual state-changing actions).
 export interface LogEntry {
@@ -16,16 +16,16 @@ const MAX_ENTRIES = 500;
 const buffer: LogEntry[] = [];
 
 // Real bug this fixes (caught during live verification of the Dev
-// Assistant's Log Agent — see BUILD_LOG.md): the Pino `hooks.logMethod`
+// Assistant's Log Agent - see BUILD_LOG.md): the Pino `hooks.logMethod`
 // runs on the RAW arguments passed to logger.info/error/etc., BEFORE Pino
 // applies its own configured serializers (see requestLogger.ts's `req`/`res`
-// serializers) — those only run at actual output-serialization time. So a
+// serializers) - those only run at actual output-serialization time. So a
 // request-completion log's raw merging object still had real Express
 // `req`/`res` objects attached, which are circular (`res.req` -> `req` ->
 // ... -> `res`), and a later `JSON.stringify` on a stored entry (to search
 // it) threw "Converting circular structure to JSON" and crashed the caller.
 // This sanitizes at STORE time, once, so every stored entry is guaranteed
-// JSON-safe forever after — searching never needs to know this history.
+// JSON-safe forever after - searching never needs to know this history.
 function safeStringify(value: unknown): string {
   const seen = new WeakSet();
   return JSON.stringify(value, (_key, val) => {

@@ -1,7 +1,7 @@
 import rateLimit from "express-rate-limit";
 import { AppError } from "../utils/AppError";
 
-// Rate limiting exists to slow down a real attacker guessing passwords —
+// Rate limiting exists to slow down a real attacker guessing passwords -
 // it should never make our OWN automated test suite flaky by having tests
 // trip each other's shared limiter state. Real request volume from a
 // script/attacker is what this guards against; NODE_ENV=test is us, so we
@@ -19,8 +19,8 @@ export const generalLimiter = rateLimit({
   },
 });
 
-// Tighter than the general limit — this is the endpoint an attacker would
-// actually try to brute-force (guessing passwords, enumerating emails) — but
+// Tighter than the general limit - this is the endpoint an attacker would
+// actually try to brute-force (guessing passwords, enumerating emails) - but
 // not SO tight that trying a few demo accounts in one sitting locks you out;
 // 30 per 15 minutes stops scripted brute-forcing while staying invisible to
 // normal use.
@@ -49,7 +49,7 @@ export const aiLimiter = rateLimit({
 });
 
 // The AI Dev Assistant can trigger multiple LLM calls AND a real test suite
-// run (~10-15s) per question — genuinely expensive compared to a normal CRUD
+// run (~10-15s) per question - genuinely expensive compared to a normal CRUD
 // request, so this is deliberately tighter than the general limiter even
 // though it's already Admin-only.
 export const devAssistantLimiter = rateLimit({

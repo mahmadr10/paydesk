@@ -17,7 +17,7 @@ async function assertTicketVisible(ticketId: string, user: JwtPayload) {
 export async function addComment(ticketId: string, user: JwtPayload, text: string, isInternal: boolean) {
   const ticket = await assertTicketVisible(ticketId, user);
 
-  // A customer can never post an internal note — even if a crafted request
+  // A customer can never post an internal note - even if a crafted request
   // sent isInternal:true, we override it here rather than trusting the
   // caller's role claim embedded in the body.
   const reallyInternal = user.role === "CUSTOMER" ? false : isInternal;
@@ -41,7 +41,7 @@ export async function addComment(ticketId: string, user: JwtPayload, text: strin
   // Two side effects, both business rules that belong here (not in the
   // controller): an agent's first reply starts the "first response" SLA
   // clock, and a customer replying to a WAITING_FOR_CUSTOMER ticket is
-  // exactly the signal that means "the ball is back in the agent's court" —
+  // exactly the signal that means "the ball is back in the agent's court" -
   // so we auto-advance the status instead of making the agent notice and
   // click a button.
   if ((user.role === "AGENT" || user.role === "ADMIN") && !reallyInternal) {

@@ -1,4 +1,4 @@
-# PayDesk — AI co-pilot for PayPal sellers
+# PayDesk - AI co-pilot for PayPal sellers
 
 Small online sellers lose money on PayPal disputes and refund requests: they answer too late, without evidence, or refund when they would have won. **PayDesk handles both with AI agents, and a human always approves before money moves.**
 
@@ -11,8 +11,8 @@ Small online sellers lose money on PayPal disputes and refund requests: they ans
 | PayPal product / API | Used for |
 |---|---|
 | **PayPal JS SDK** (Smart Buttons) | Buyer checkout in the demo store |
-| **PayPal Server SDK** (`@paypal/paypal-server-sdk`, APIMatic-generated) — Orders v2 | Create + capture orders (`OrdersController`) |
-| **PayPal Server SDK** — Payments v2 | Live capture lookup + refunds (`PaymentsController`), idempotent via `PayPal-Request-Id` |
+| **PayPal Server SDK** (`@paypal/paypal-server-sdk`, APIMatic-generated) - Orders v2 | Create + capture orders (`OrdersController`) |
+| **PayPal Server SDK** - Payments v2 | Live capture lookup + refunds (`PaymentsController`), idempotent via `PayPal-Request-Id` |
 | **Disputes API v1** | Read disputes, accept claim, make offer, provide evidence (multipart), sandbox adjudicate |
 | **Webhooks** + `verify-webhook-signature` | `CUSTOMER.DISPUTE.*` events open and update cases. Every event is verified with PayPal and stored once (idempotent). |
 | **PayPal Agent Toolkit** (`@paypal/agent-toolkit`) | "Ask PayPal" chat tools: disputes, transactions, orders, refunds, invoices, insights (read-only) |

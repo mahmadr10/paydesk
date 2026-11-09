@@ -1,9 +1,9 @@
 import { Schema, model, Document, Types } from "mongoose";
 
-// We never store the raw refresh token — only a SHA-256 hash of it (see
+// We never store the raw refresh token - only a SHA-256 hash of it (see
 // utils/jwt.ts hashToken). Same principle as password hashing: if this
 // collection ever leaked, the tokens inside it would be useless to an
-// attacker. The raw token is a random 40-byte string, never a JWT — there's
+// attacker. The raw token is a random 40-byte string, never a JWT - there's
 // nothing to "decode", it's just a bearer secret we look up by its hash.
 export interface IRefreshToken extends Document {
   _id: Types.ObjectId;

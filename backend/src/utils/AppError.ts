@@ -1,6 +1,6 @@
 // A custom error type so we can throw errors anywhere in the app (services,
 // controllers, middleware) and have ONE place turn them into a consistent
-// JSON response — instead of every route handler writing its own res.status().json(...).
+// JSON response - instead of every route handler writing its own res.status().json(...).
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly code: string;

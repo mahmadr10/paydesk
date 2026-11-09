@@ -69,7 +69,7 @@ export interface Ticket {
   createdAt: string;
   updatedAt: string;
   sla: SlaInfo;
-  // Only present on the single-ticket GET (not list) — the server's
+  // Only present on the single-ticket GET (not list) - the server's
   // authoritative answer to "which status buttons should I show."
   allowedNextStatuses?: TicketStatus[];
 }
@@ -104,7 +104,7 @@ export interface TicketAiAnalysis {
   suggestedPriority: TicketPriority;
   suggestedResponse: string;
   // "groq" when a real LLM call produced this; "mock" when running without a
-  // GROQ_API_KEY (the app's required no-API-key fallback) — shown in the UI
+  // GROQ_API_KEY (the app's required no-API-key fallback) - shown in the UI
   // so it's never mistaken for a live model's judgment.
   source: "groq" | "mock";
 }

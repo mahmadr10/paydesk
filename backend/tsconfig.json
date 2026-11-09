@@ -9,7 +9,7 @@
     "outDir": "dist",
     "rootDir": "src",
 
-    /* Makes TypeScript actually strict — catches bugs like "this could be undefined" */
+    /* Makes TypeScript actually strict - catches bugs like "this could be undefined" */
     "strict": true,
 
     /* Lets us import CommonJS packages (like express) with `import express from "express"` syntax */
@@ -17,7 +17,7 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
 
-    /* How TypeScript finds imported files — "node16" matches our CommonJS setup */
+    /* How TypeScript finds imported files - "node16" matches our CommonJS setup */
     "moduleResolution": "node16",
     "resolveJsonModule": true
   },

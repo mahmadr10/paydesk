@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 // Formats a millisecond duration as "HH:MM:SS remaining" (or "overdue" once
-// negative) — matching the spec's own example display exactly.
+// negative) - matching the spec's own example display exactly.
 function formatDuration(ms: number): string {
   const isNegative = ms < 0;
   const abs = Math.abs(ms);
@@ -14,7 +14,7 @@ function formatDuration(ms: number): string {
   return isNegative ? `overdue by ${clock}` : `${clock} remaining`;
 }
 
-// A ticking countdown — SLA remaining time isn't something the server can
+// A ticking countdown - SLA remaining time isn't something the server can
 // push updates for every second (that would be a lot of socket traffic for
 // something the CLIENT can compute on its own from a fixed deadline). We
 // just re-render once a second locally; the deadline itself still comes

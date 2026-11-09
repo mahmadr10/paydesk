@@ -1,11 +1,11 @@
 // Run manually with: npm run seed:demo
 //
-// `seed:users` creates the 3 demo accounts but no tickets — logging in
+// `seed:users` creates the 3 demo accounts but no tickets - logging in
 // right after that shows an empty "My Tickets"/queue/dashboard, which is a
 // weak demo (a single ticket created live is the right thing to SHOW, but
 // an admin's Dashboard/Analytics/Audit Logs screens need more than one data
 // point to look like anything). This creates a small, realistic, HAND-
-// CURATED spread (not `seed:perf`'s 10,000 random rows — that's for query
+// CURATED spread (not `seed:perf`'s 10,000 random rows - that's for query
 // benchmarking, not a demo video) across every status/priority/category, so
 // the dashboard/analytics/audit-log screens have something real to show
 // before you've clicked anything.
@@ -26,12 +26,12 @@ interface SeedTicket {
   priority: TicketPriority;
   status: TicketStatus;
   assigned: boolean;
-  daysAgo: number; // how long ago it was created — lets some SLAs breach realistically
+  daysAgo: number; // how long ago it was created - lets some SLAs breach realistically
 }
 
 const TICKETS: SeedTicket[] = [
   { title: "Payment API returns HTTP 500 on checkout", description: "Every checkout attempt since ~10am today fails with a 500 from the payment gateway. Affects all customers.", category: "Technical", priority: "CRITICAL", status: "IN_PROGRESS", assigned: true, daysAgo: 0.2 },
-  { title: "Cannot log in — password reset email never arrives", description: "Requested a password reset three times, no email in inbox or spam.", category: "Account", priority: "HIGH", status: "TRIAGED", assigned: false, daysAgo: 0.4 },
+  { title: "Cannot log in - password reset email never arrives", description: "Requested a password reset three times, no email in inbox or spam.", category: "Account", priority: "HIGH", status: "TRIAGED", assigned: false, daysAgo: 0.4 },
   { title: "Dashboard charts render blank on Safari", description: "The analytics bar charts don't render at all on Safari 17, works fine on Chrome.", category: "Technical", priority: "MEDIUM", status: "ASSIGNED", assigned: true, daysAgo: 1 },
   { title: "Feature request: dark mode", description: "Would love a dark mode toggle for the ticket queue.", category: "Other", priority: "LOW", status: "OPEN", assigned: false, daysAgo: 0.1 },
   { title: "Invoice shows incorrect tax amount", description: "Last month's invoice shows 15% tax, our contract specifies 8%.", category: "Billing", priority: "MEDIUM", status: "WAITING_FOR_CUSTOMER", assigned: true, daysAgo: 2 },
@@ -40,7 +40,7 @@ const TICKETS: SeedTicket[] = [
   { title: "Slow page load on the ticket detail view", description: "Ticket detail page takes 4-5 seconds to load, other pages are fast.", category: "Technical", priority: "MEDIUM", status: "IN_PROGRESS", assigned: true, daysAgo: 0.5 },
   { title: "Duplicate charge on this month's invoice", description: "Charged twice for the same subscription period, need a refund.", category: "Billing", priority: "CRITICAL", status: "TRIAGED", assigned: false, daysAgo: 0.05 },
   { title: "Typo in the welcome email subject line", description: "The welcome email subject says 'Wellcome' instead of 'Welcome'.", category: "Other", priority: "LOW", status: "CLOSED", assigned: true, daysAgo: 10 },
-  { title: "API rate limit hit unexpectedly", description: "Getting 429s well under our documented rate limit — seems too aggressive.", category: "Technical", priority: "HIGH", status: "OPEN", assigned: false, daysAgo: 0.02 },
+  { title: "API rate limit hit unexpectedly", description: "Getting 429s well under our documented rate limit - seems too aggressive.", category: "Technical", priority: "HIGH", status: "OPEN", assigned: false, daysAgo: 0.02 },
   { title: "Cannot upload attachments over 3MB", description: "Docs say 5MB limit but uploads fail around 3MB with a generic error.", category: "Technical", priority: "MEDIUM", status: "ASSIGNED", assigned: true, daysAgo: 1.5 },
   { title: "Billing portal shows wrong plan name", description: "We're on the Enterprise plan but the portal shows 'Starter'.", category: "Billing", priority: "LOW", status: "RESOLVED", assigned: true, daysAgo: 7 },
   { title: "Security: possible XSS in comment field", description: "Was able to enter a <script> tag in a comment, want confirmation it's sanitized.", category: "Technical", priority: "CRITICAL", status: "IN_PROGRESS", assigned: true, daysAgo: 0.3 },
@@ -54,7 +54,7 @@ async function main() {
   const customer = await User.findOne({ email: "customer@demo.servicedesk" });
   const agent = await User.findOne({ email: "agent@demo.servicedesk" });
   if (!customer || !agent) {
-    console.error("Demo accounts not found — run `npm run seed:users` first.");
+    console.error("Demo accounts not found - run `npm run seed:users` first.");
     process.exit(1);
   }
 

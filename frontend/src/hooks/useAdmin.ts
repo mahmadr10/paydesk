@@ -4,7 +4,7 @@ import { listActiveCategoriesRequest } from "../api/categories";
 import type { TicketPriority, UserRole } from "../types";
 
 // Any logged-in user can fetch the active category list (e.g. to fill the
-// Create Ticket form) — distinct from the admin-only management hooks below.
+// Create Ticket form) - distinct from the admin-only management hooks below.
 export function useActiveCategories() {
   return useQuery({ queryKey: ["categories", "active"], queryFn: listActiveCategoriesRequest });
 }

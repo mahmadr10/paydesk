@@ -6,7 +6,7 @@ export interface IComment extends Document {
   author: Types.ObjectId;
   authorRole: "CUSTOMER" | "AGENT" | "ADMIN";
   text: string;
-  // Internal notes are agent/admin-only — visible to support staff, hidden
+  // Internal notes are agent/admin-only - visible to support staff, hidden
   // from the customer entirely (e.g. "escalating this to the payments
   // team, customer seems frustrated"). Enforced in commentService, not just
   // hidden in the UI: a customer's list-comments call filters these out

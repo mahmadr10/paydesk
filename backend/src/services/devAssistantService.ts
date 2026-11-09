@@ -8,11 +8,11 @@ import { runDevAssistantMock } from "../ai/devAssistant/mockOrchestrator";
 import type { OnStep } from "../ai/devAssistant/orchestratorGraph";
 import { applyFix, ApplyFixInput } from "../ai/devAssistant/applyFix";
 
-// The AI Dev Assistant — same replaceable-abstraction shape as
+// The AI Dev Assistant - same replaceable-abstraction shape as
 // aiService.analyzeTicket(): one function, real-vs-mock decided here, real
 // implementation and its provider are an implementation detail nobody else
 // imports. Admin-only (enforced by the route), investigate-and-recommend
-// only (enforced structurally — see ai/devAssistant/tools.ts, there is no
+// only (enforced structurally - see ai/devAssistant/tools.ts, there is no
 // write tool for the graph to call).
 export async function askDevAssistant(question: string, actor: { userId: string }) {
   return withSpan("devAssistantService.askDevAssistant", async () => {
@@ -22,7 +22,7 @@ export async function askDevAssistant(question: string, actor: { userId: string 
 
     const aiConfigured = env.AI_ENABLED === "true" && !!env.GROQ_API_KEY;
     // `source` tracks which path ACTUALLY ran, not just whether a key was
-    // configured — a real bug caught during live verification (see
+    // configured - a real bug caught during live verification (see
     // BUILD_LOG.md): the graph threw mid-run (an unrelated logging bug),
     // the catch below correctly fell back to the mock, but the response was
     // labeled "groq" anyway because that label was computed from
@@ -42,7 +42,7 @@ export async function askDevAssistant(question: string, actor: { userId: string 
       actor: actor.userId,
       action: "DEV_ASSISTANT_QUERY",
       entity: "System",
-      entityId: actor.userId, // no natural entity for a system-wide investigation — attributed to the asking admin
+      entityId: actor.userId, // no natural entity for a system-wide investigation - attributed to the asking admin
       newValue: { question, selectedAgents: result.selectedAgents },
       metadata: { source },
     });
@@ -51,7 +51,7 @@ export async function askDevAssistant(question: string, actor: { userId: string 
   });
 }
 
-// The ONE gated write path — reached only after a human has seen the
+// The ONE gated write path - reached only after a human has seen the
 // suggested diff and explicitly clicked "Apply" (there is no automatic
 // call path into this from askDevAssistant above). applyFix.ts does the
 // actual safety work (path validation, exact-match validation, apply,

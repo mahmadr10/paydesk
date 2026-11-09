@@ -5,7 +5,7 @@ import { getApiErrorMessage } from "../../api/client";
 import type { User } from "../../types";
 
 function ValueCell({ value }: { value: unknown }) {
-  if (value === null || value === undefined) return <span className="text-slate-300">—</span>;
+  if (value === null || value === undefined) return <span className="text-slate-300">-</span>;
   const text = typeof value === "string" ? value : JSON.stringify(value);
   return <span className="font-mono text-xs">{text.length > 40 ? text.slice(0, 40) + "…" : text}</span>;
 }

@@ -50,7 +50,7 @@ function AgentBox({ agent, step }: { agent: DevAssistantAgent; step?: { status: 
   );
 }
 
-// Old code struck through in red, new code in green — a minimal diff view,
+// Old code struck through in red, new code in green - a minimal diff view,
 // not a full syntax-highlighted editor, because this only ever needs to
 // show one small, localized change (applyFix.ts itself refuses anything
 // that isn't).
@@ -79,10 +79,10 @@ export function DevAssistantPage() {
     <div className="mx-auto mt-8 max-w-3xl">
       <h1 className="text-xl font-semibold text-slate-800">AI Dev Assistant</h1>
       <p className="mt-1 text-sm text-slate-500">
-        A multi-agent investigator for THIS codebase — an orchestrator picks which read-only agents
+        A multi-agent investigator for THIS codebase - an orchestrator picks which read-only agents
         (repo search, git history, recent logs, the real test suite) are relevant to your question,
         runs them, and synthesizes a diagnosis. It can propose a specific code fix, but{" "}
-        <strong>nothing is ever applied without your explicit click</strong> — and an applied fix
+        <strong>nothing is ever applied without your explicit click</strong> - and an applied fix
         immediately re-runs the real test suite, auto-reverting itself if anything breaks.
       </p>
 
@@ -150,7 +150,7 @@ export function DevAssistantPage() {
           </div>
           <p className="whitespace-pre-wrap text-sm text-slate-700">{result.diagnosis}</p>
           <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-400">
-            Investigation only — no code was changed by the analysis itself. Applying the suggested
+            Investigation only - no code was changed by the analysis itself. Applying the suggested
             fix below (if any) is a separate, explicit step.
           </p>
         </div>
@@ -195,8 +195,8 @@ export function DevAssistantPage() {
             <div className={`mt-3 rounded p-3 text-xs ${applyFix.data.applied ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800"}`}>
               <p className="font-medium">
                 {applyFix.data.applied
-                  ? "✓ Applied — tests passed."
-                  : "✗ Reverted automatically — the change broke the test suite. No file was left modified."}
+                  ? "✓ Applied - tests passed."
+                  : "✗ Reverted automatically - the change broke the test suite. No file was left modified."}
               </p>
               <pre className="mt-1 whitespace-pre-wrap">{applyFix.data.testSummary}</pre>
             </div>

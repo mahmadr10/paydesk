@@ -2,7 +2,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 
 // A small, consistent wrapper around Recharts for every "X by Y" bar chart
 // in the dashboards (tickets by status, by priority, by category, by
-// agent) — one place to keep the look consistent instead of repeating
+// agent) - one place to keep the look consistent instead of repeating
 // Recharts boilerplate on every page.
 export function BarChartCard({
   title,

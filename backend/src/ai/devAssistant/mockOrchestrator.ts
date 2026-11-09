@@ -1,4 +1,4 @@
-// The AI Dev Assistant's no-API-key fallback — same principle as
+// The AI Dev Assistant's no-API-key fallback - same principle as
 // ai/mockAnalyzer.ts: the app (and this feature) must work with zero API
 // key. No LLM planner and no LLM synthesis here; a simple keyword heuristic
 // picks agents, and the "diagnosis" is just the raw findings, clearly
@@ -36,17 +36,17 @@ export async function runDevAssistantMock(question: string, onStep: OnStep) {
 
   onStep("diagnosis", "running");
   const diagnosis =
-    "No GROQ_API_KEY configured — showing raw findings only, no AI synthesis. " +
+    "No GROQ_API_KEY configured - showing raw findings only, no AI synthesis. " +
     "Set GROQ_API_KEY for an actual diagnosis and recommendation.\n\n" +
     Object.entries(findings)
       .map(([agent, text]) => `--- ${agent} ---\n${text}`)
       .join("\n\n");
   onStep("diagnosis", "done", diagnosis);
 
-  // No fix suggestion without a real model — generating a code patch is a
+  // No fix suggestion without a real model - generating a code patch is a
   // genuinely higher-stakes action than a keyword-heuristic diagnosis, not
   // something to fake with string templates the way the diagnosis text is.
-  onStep("suggestFix", "done", "No GROQ_API_KEY configured — fix suggestions require a real model.");
+  onStep("suggestFix", "done", "No GROQ_API_KEY configured - fix suggestions require a real model.");
 
   return {
     selectedAgents,

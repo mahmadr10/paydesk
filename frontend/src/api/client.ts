@@ -1,12 +1,12 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "../config";
 
-// The access token now lives ONLY in memory (a plain module variable) —
+// The access token now lives ONLY in memory (a plain module variable) -
 // never in localStorage. This is the frontend half of the access/refresh
 // upgrade: since the refresh token sits in an httpOnly cookie the browser
 // manages automatically, the frontend never needs to persist anything
 // itself. The trade-off is that a hard page refresh loses the in-memory
-// token — AuthContext handles that by calling /auth/refresh once on
+// token - AuthContext handles that by calling /auth/refresh once on
 // startup, which silently exchanges the still-valid cookie for a fresh
 // access token.
 let accessToken: string | null = null;
@@ -31,7 +31,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// A separate, plain axios call for the refresh endpoint itself — it must
+// A separate, plain axios call for the refresh endpoint itself - it must
 // NOT go through the response interceptor below (that would recurse: a
 // failed refresh triggering another refresh attempt forever).
 async function performRefresh() {
@@ -46,10 +46,10 @@ export function registerAuthFailureHandler(fn: () => void) {
   onAuthFailure = fn;
 }
 
-// Response interceptor: if a request comes back 401 (access token expired —
+// Response interceptor: if a request comes back 401 (access token expired -
 // they only live 15 minutes), try ONE silent refresh and replay the
 // original request. `_retry` stops this from looping if the refreshed
-// request somehow 401s again (e.g. the refresh token itself is also dead —
+// request somehow 401s again (e.g. the refresh token itself is also dead -
 // at that point we give up and log the user out).
 declare module "axios" {
   interface InternalAxiosRequestConfig {

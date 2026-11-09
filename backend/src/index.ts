@@ -1,4 +1,4 @@
-// Must be the very first import in the process — see the file's own comment
+// Must be the very first import in the process - see the file's own comment
 // for why (auto-instrumentation patches modules at require-time).
 import "./observability/tracing";
 

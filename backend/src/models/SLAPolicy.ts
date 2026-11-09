@@ -20,7 +20,7 @@ const slaPolicySchema = new Schema<ISLAPolicy>({
 
 export const SLAPolicy = model<ISLAPolicy>("SLAPolicy", slaPolicySchema);
 
-// Seeded defaults (minutes) if the collection is empty — see config/seed.ts.
+// Seeded defaults (minutes) if the collection is empty - see config/seed.ts.
 // CRITICAL: 15 min response / 4h resolution · HIGH: 1h / 8h ·
 // MEDIUM: 4h / 24h · LOW: 8h / 72h.
 export const DEFAULT_SLA_POLICIES: Record<TicketPriority, { responseMinutes: number; resolutionMinutes: number }> = {

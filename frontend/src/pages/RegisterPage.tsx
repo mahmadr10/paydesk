@@ -61,7 +61,7 @@ export function RegisterPage() {
           Demo-scope decision (unchanged from the earlier build): there's no
           Admin-provisioning flow for agent accounts, so role is picked at
           signup. Admin accounts are seeded/promoted, never self-registered
-          — see backend/src/validators/authValidators.ts.
+          - see backend/src/validators/authValidators.ts.
         */}
         <label className="text-sm text-slate-600">
           I am a:

@@ -7,8 +7,8 @@ import { Ticket } from "../models/Ticket";
 import { Notification } from "../models/Notification";
 import { checkSlaBreaches } from "./slaBreachJob";
 
-// Exercises the REAL job function against a REAL (in-memory) database — not
-// just its shape — because the interesting bugs here are query-level ones
+// Exercises the REAL job function against a REAL (in-memory) database - not
+// just its shape - because the interesting bugs here are query-level ones
 // ("did this actually find the breached ticket," "did it actually skip an
 // already-notified one"), which a pure unit test with a mocked Ticket model
 // wouldn't catch.
@@ -37,7 +37,7 @@ describe("slaBreachJob: checkSlaBreaches", () => {
       customer: customer._id,
       assignedAgent: agent._id,
       responseDeadline: new Date(now.getTime() - 2 * 60 * 60 * 1000),
-      resolutionDeadline: new Date(now.getTime() - 60 * 1000), // 1 minute ago — already breached
+      resolutionDeadline: new Date(now.getTime() - 60 * 1000), // 1 minute ago - already breached
       firstResponseAt: new Date(now.getTime() - 90 * 60 * 1000), // already responded, so only resolution breaches
       resolvedAt: null,
     });
@@ -53,7 +53,7 @@ describe("slaBreachJob: checkSlaBreaches", () => {
     expect(notification?.user.toString()).toBe(agent._id.toString());
     expect(notification?.read).toBe(false);
 
-    // Second run must NOT re-notify — the whole point of the *Notified flag.
+    // Second run must NOT re-notify - the whole point of the *Notified flag.
     const countBefore = await Notification.countDocuments({ ticket: ticket._id });
     await checkSlaBreaches();
     const countAfter = await Notification.countDocuments({ ticket: ticket._id });

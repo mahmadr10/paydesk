@@ -6,7 +6,7 @@ import { listAuditLogsQuerySchema } from "../validators/auditLogValidators";
 
 const router = Router();
 
-// Only admins inspect the audit trail — per spec, this is an
+// Only admins inspect the audit trail - per spec, this is an
 // administrator-only capability.
 router.get("/", requireAuth, requireRole("ADMIN"), validate(listAuditLogsQuerySchema, "query"), getAuditLogs);
 

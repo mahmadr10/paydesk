@@ -17,7 +17,7 @@ export function countUnread(userId: string) {
 }
 
 export function markRead(id: string, userId: string) {
-  // Scoped to the requesting user — one user can never mark another's
+  // Scoped to the requesting user - one user can never mark another's
   // notification read (and there's nothing sensitive to leak by a 404 vs
   // 403 distinction here, so a plain "not found for you" no-op-if-absent
   // is fine, unlike ticket ownership checks elsewhere in this app).

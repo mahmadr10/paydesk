@@ -15,7 +15,7 @@ import { TicketAnalysisInput, TicketAnalysisOutput } from "./mockAnalyzer";
 // they run as independent parallel branches (LangGraph batches everything
 // reachable from START in one superstep); `draftResponse` genuinely NEEDS
 // both of their outputs (it references the category/priority AND the
-// summary when drafting a reply), so it can't start until both finish —
+// summary when drafting a reply), so it can't start until both finish -
 // LangGraph waits for every incoming edge before running a fan-in node.
 // This is the concrete reason a graph earns its keep here over a single
 // prompt: two independent pieces of work, one downstream step that depends
@@ -33,7 +33,7 @@ const TicketAnalysisState = Annotation.Root({
 type GraphState = typeof TicketAnalysisState.State;
 
 function buildModel() {
-  // One model instance per graph run rather than a module-level singleton —
+  // One model instance per graph run rather than a module-level singleton -
   // this is cheap (no connection to hold open) and means a future per-request
   // override (e.g. a different model for a paid tier) doesn't need rearchitecting.
   return new ChatGroq({ apiKey: env.GROQ_API_KEY, model: env.AI_MODEL, temperature: 0.2 });
@@ -51,7 +51,7 @@ async function classifyNode(state: GraphState): Promise<Partial<GraphState>> {
       role: "system",
       content:
         "You are a support ticket triage assistant. Pick the single best category from the given list " +
-        "(copy it exactly — do not invent a new one) and a priority level reflecting real urgency: " +
+        "(copy it exactly - do not invent a new one) and a priority level reflecting real urgency: " +
         "CRITICAL only for outages/security/data loss/payment failures; HIGH for a clear error/bug blocking " +
         "the user; MEDIUM for a working-but-degraded issue; LOW for cosmetic issues or questions.",
     },
@@ -61,8 +61,8 @@ async function classifyNode(state: GraphState): Promise<Partial<GraphState>> {
     },
   ]);
   // Guard against the model returning a category that isn't actually in the
-  // list despite the instruction — LLMs are probabilistic, this constraint
-  // is not — fall back to the first valid category rather than let a
+  // list despite the instruction - LLMs are probabilistic, this constraint
+  // is not - fall back to the first valid category rather than let a
   // hallucinated one leak into ticket data.
   const category = state.validCategories.includes(result.category) ? result.category : state.validCategories[0];
   return { category, priority: result.priority as TicketPriority };

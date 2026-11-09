@@ -1,11 +1,11 @@
 import { User, IUser, UserRole } from "../models/User";
 
-// A repository's ONLY job is talking to the database for one collection —
+// A repository's ONLY job is talking to the database for one collection -
 // no business rules, no auth checks, no HTTP knowledge. Why add this layer
 // on top of Mongoose (which is already a nice API)? Two reasons: (1) it's
 // the seam a unit test can mock out to test a service's LOGIC without a
 // real database, and (2) if we ever swapped MongoDB for something else,
-// only this file would need to change — services wouldn't know the
+// only this file would need to change - services wouldn't know the
 // difference.
 export function findUserByEmail(email: string) {
   return User.findOne({ email });
@@ -32,7 +32,7 @@ export function updateUser(id: string, updates: Partial<Pick<IUser, "role" | "is
 }
 
 // Used by jobs/slaBreachJob.ts: an UNASSIGNED ticket breaching its SLA has
-// no specific agent to notify, so every active admin gets it instead — an
+// no specific agent to notify, so every active admin gets it instead - an
 // unassigned-and-overdue ticket is a triage/staffing problem, not one
 // agent's problem.
 export function findActiveAdminIds() {

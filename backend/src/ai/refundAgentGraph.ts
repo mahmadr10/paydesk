@@ -160,7 +160,7 @@ async function gatherFacts(state: S): Promise<Partial<S>> {
         name: "Checked refund history",
         detail:
           `${facts.recentRefundCount} refund(s) to this customer in the last 90 days` +
-          (facts.riskLevel === "HIGH" ? " — high refund frequency, flagged for manual review" : " — normal"),
+          (facts.riskLevel === "HIGH" ? " - high refund frequency, flagged for manual review" : " - normal"),
       },
     ],
   };

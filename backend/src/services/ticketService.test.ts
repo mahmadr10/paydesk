@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { isLegalTransition } from "./ticketService";
 
-// We test isLegalTransition() directly — it's a pure function (same input,
-// same output, no database, no side effects) — rather than hitting the real
+// We test isLegalTransition() directly - it's a pure function (same input,
+// same output, no database, no side effects) - rather than hitting the real
 // API. This is the single rule the whole ticket workflow depends on being
 // correct, so it's the highest-value place to have tests.
 describe("ticket state machine: isLegalTransition", () => {

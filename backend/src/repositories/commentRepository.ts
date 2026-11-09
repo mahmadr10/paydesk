@@ -10,7 +10,7 @@ export function createComment(data: {
   return Comment.create(data);
 }
 
-// includeInternal is false for a customer's view — internal notes never
+// includeInternal is false for a customer's view - internal notes never
 // even reach the query result, rather than being filtered out afterwards.
 export function findCommentsForTicket(ticketId: string, includeInternal: boolean) {
   const query: Record<string, unknown> = { ticket: ticketId };

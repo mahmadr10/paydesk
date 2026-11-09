@@ -17,7 +17,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
     // the user has been deactivated since the token was issued (that would
     // need a DB read on every single request, which defeats the point of a
     // stateless access token). Worst case, a deactivated user's *existing*
-    // access token stays valid for up to 15 minutes — an accepted trade-off
+    // access token stays valid for up to 15 minutes - an accepted trade-off
     // given how short-lived access tokens are; /auth/refresh DOES check
     // isActive, so it's revoked within one refresh cycle at most.
     req.user = verifyAccessToken(token);

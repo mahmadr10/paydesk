@@ -2,8 +2,8 @@
 //                    npm run benchmark   (then, to measure)
 //
 // Demonstrates ONE concrete query optimization with real numbers, not a
-// claim. The query: an agent's filtered, sorted, paginated ticket queue —
-// "assigned to me, status = IN_PROGRESS, newest first" — exactly what
+// claim. The query: an agent's filtered, sorted, paginated ticket queue -
+// "assigned to me, status = IN_PROGRESS, newest first" - exactly what
 // GET /api/v1/tickets does for the Ticket Queue page.
 import mongoose from "mongoose";
 import { connectDB } from "../config/db";
@@ -12,7 +12,7 @@ import { User } from "../models/User";
 
 async function explainQuery(label: string) {
   const agent = await User.findOne({ role: "AGENT" });
-  if (!agent) throw new Error("No agent found — run `npm run seed:perf` first.");
+  if (!agent) throw new Error("No agent found - run `npm run seed:perf` first.");
 
   const query = { assignedAgent: agent._id, status: "IN_PROGRESS" as TicketStatus };
 
@@ -26,7 +26,7 @@ async function explainQuery(label: string) {
   const stats = (explanation as any).executionStats;
 
   // The plan is a TREE (e.g. SORT -> FETCH -> IXSCAN, or SORT -> COLLSCAN)
-  // — the top-level stage is usually just "SORT" regardless of what's
+  // - the top-level stage is usually just "SORT" regardless of what's
   // underneath, so we walk down to find the actual scan stage that
   // determines whether an index was used.
   let node = stats.executionStages;
@@ -43,7 +43,7 @@ async function explainQuery(label: string) {
   console.log(`  Documents examined:  ${stats.totalDocsExamined}`);
   console.log(`  Documents returned:  ${stats.nReturned}`);
   console.log(`  Plan stages:         ${stagesSeen.join(" -> ")}`);
-  console.log(`  Used index?          ${usedIndex ? "YES (IXSCAN)" : "NO (COLLSCAN — full collection scan)"}`);
+  console.log(`  Used index?          ${usedIndex ? "YES (IXSCAN)" : "NO (COLLSCAN - full collection scan)"}`);
 }
 
 async function main() {
@@ -56,7 +56,7 @@ async function main() {
   }
 
   // ── BEFORE: drop the compound index, forcing MongoDB to fall back to a
-  // full collection scan — examining every single document to find the
+  // full collection scan - examining every single document to find the
   // ones matching assignedAgent+status, then sorting the results in memory.
   // We look the index up by its KEY PATTERN rather than guessing its
   // auto-generated name string, so this doesn't silently no-op if Mongoose
@@ -68,12 +68,12 @@ async function main() {
   if (targetIndex?.name) {
     await Ticket.collection.dropIndex(targetIndex.name);
   } else {
-    console.log("(index not found — already absent)");
+    console.log("(index not found - already absent)");
   }
   await explainQuery("BEFORE (no compound index)");
 
   // ── AFTER: recreate the index. Mongoose's schema already declares it
-  // (models/Ticket.ts) — this just re-syncs the actual DB indexes to match
+  // (models/Ticket.ts) - this just re-syncs the actual DB indexes to match
   // the schema, same as what happens automatically on a normal app boot.
   await Ticket.syncIndexes();
   await explainQuery("AFTER (compound index restored)");

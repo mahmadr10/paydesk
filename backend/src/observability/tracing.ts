@@ -1,4 +1,4 @@
-// OpenTelemetry bootstrap — MUST be imported before anything else in the
+// OpenTelemetry bootstrap - MUST be imported before anything else in the
 // process (see src/index.ts, where this is the literal first import). Node's
 // auto-instrumentation works by monkey-patching modules (http, express,
 // mongodb, ...) the moment they're `require`d; if app.ts or any of its
@@ -8,9 +8,9 @@
 // Demonstrates the exact chain the spec asks for:
 //   HTTP Request → Express Route → Service → MongoDB
 // "HTTP Request" and "Express Route" and "MongoDB" come for free from the
-// auto-instrumentations below (http, express, mongodb — mongoose sits on top
+// auto-instrumentations below (http, express, mongodb - mongoose sits on top
 // of the mongodb driver, so instrumenting the driver covers it). "Service" is
-// NOT auto-instrumented (it's just plain function calls, nothing to patch) —
+// NOT auto-instrumented (it's just plain function calls, nothing to patch) -
 // see observability/otel.ts's `withSpan()`, used explicitly in a handful of
 // representative service functions so that layer shows up in the trace too.
 import { NodeSDK } from "@opentelemetry/sdk-node";
@@ -29,8 +29,8 @@ const serviceName = process.env.OTEL_SERVICE_NAME ?? "servicedesk-backend";
 if (otelEnabled) {
   // Traces: if a real collector/Jaeger endpoint is configured (docker-compose
   // sets this to Jaeger's OTLP HTTP receiver), export there over OTLP/HTTP.
-  // With NO endpoint configured — the zero-setup default for `npm run dev`,
-  // no collector required — fall back to printing spans to the console, so
+  // With NO endpoint configured - the zero-setup default for `npm run dev`,
+  // no collector required - fall back to printing spans to the console, so
   // "with trace information where practical" is true even without any extra
   // infrastructure running.
   const traceExporter = otlpEndpoint
@@ -38,11 +38,11 @@ if (otelEnabled) {
     : new ConsoleSpanExporter();
 
   // Metrics: PrometheusExporter starts its own tiny HTTP server and serves
-  // metrics in Prometheus's scrape format directly — no collector needed,
+  // metrics in Prometheus's scrape format directly - no collector needed,
   // Prometheus (or a curl in the demo video) can hit it as-is. This is a
   // deliberate choice, not the only valid one: an OTLP metrics exporter
   // (paired with the trace exporter above) would also work and would let a
-  // full OTel Collector pipeline handle both signals uniformly — chosen
+  // full OTel Collector pipeline handle both signals uniformly - chosen
   // Prometheus's pull model instead because it needs nothing running to be
   // useful (`curl localhost:9464/metrics` works with zero other services up),
   // where OTLP metrics would need a collector or backend already listening.
@@ -59,7 +59,7 @@ if (otelEnabled) {
       getNodeAutoInstrumentations({
         // The fs instrumentation generates a span for every single file
         // read/write on the process (including ones Node itself does
-        // internally) — overwhelming noise with near-zero diagnostic value
+        // internally) - overwhelming noise with near-zero diagnostic value
         // for this app. Everything else (http, express, mongodb, dns, ...)
         // stays on.
         "@opentelemetry/instrumentation-fs": { enabled: false },
@@ -69,7 +69,7 @@ if (otelEnabled) {
 
   sdk.start();
 
-  // Plain console.log, not the Pino logger — this runs before the logger
+  // Plain console.log, not the Pino logger - this runs before the logger
   // module (and its env-driven config) is even imported.
   console.log(
     `[otel] tracing started (service=${serviceName}, traces=${otlpEndpoint ? `OTLP ${otlpEndpoint}` : "console"}, metrics=http://localhost:${metricsPort}/metrics)`

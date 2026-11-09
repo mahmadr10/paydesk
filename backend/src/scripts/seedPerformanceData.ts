@@ -1,7 +1,7 @@
 // Run manually with: npm run seed:perf
 // Generates a large, realistic dataset (10,000+ tickets across a handful of
 // customers/agents) so we can actually MEASURE query performance instead of
-// guessing — an index either helps at this scale or it doesn't, and you
+// guessing - an index either helps at this scale or it doesn't, and you
 // can't tell the difference on 20 hand-created demo tickets.
 import { connectDB } from "../config/db";
 import { seedDefaults } from "../config/seed";
@@ -27,7 +27,7 @@ async function main() {
   await seedDefaults();
 
   console.log("Seeding demo users…");
-  const passwordHash = await bcrypt.hash("PerfTestPass123!", 4); // low cost factor — this is throwaway perf data, not real accounts
+  const passwordHash = await bcrypt.hash("PerfTestPass123!", 4); // low cost factor - this is throwaway perf data, not real accounts
 
   const customerIds: mongoose.Types.ObjectId[] = [];
   for (let i = 0; i < CUSTOMER_COUNT; i++) {

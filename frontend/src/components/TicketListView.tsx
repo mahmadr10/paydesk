@@ -5,7 +5,7 @@ import { PriorityBadge } from "./PriorityBadge";
 import { SlaCountdown } from "./SlaCountdown";
 
 // One shared table used by "My Tickets" (customer), "Ticket Queue"
-// (agent), and "All Tickets" (admin) — the three views differ only in
+// (agent), and "All Tickets" (admin) - the three views differ only in
 // which columns/actions they need, controlled by props, not three
 // near-duplicate components.
 export function TicketListView({
@@ -54,7 +54,7 @@ export function TicketListView({
                     {t.ticketNumber} · {t.category}
                   </p>
                 </td>
-                {showCustomerColumn && <td className="px-4 py-3 text-slate-600">{customer?.name ?? "—"}</td>}
+                {showCustomerColumn && <td className="px-4 py-3 text-slate-600">{customer?.name ?? "-"}</td>}
                 <td className="px-4 py-3">
                   <StatusBadge status={t.status} />
                 </td>
@@ -63,7 +63,7 @@ export function TicketListView({
                 </td>
                 <td className="px-4 py-3">
                   {t.status === "RESOLVED" || t.status === "CLOSED" ? (
-                    <span className="text-slate-400">—</span>
+                    <span className="text-slate-400">-</span>
                   ) : (
                     <SlaCountdown deadline={t.resolutionDeadline} breached={t.sla.resolutionBreached} />
                   )}

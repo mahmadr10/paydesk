@@ -8,12 +8,12 @@ export type { TicketAnalysisInput, TicketAnalysisOutput };
 
 // The "replaceable service abstraction" the spec asks for: every caller in
 // this app (ticketService, the controller) only ever imports THIS function.
-// Nothing outside this file knows LangGraph or Groq exist — swapping the
+// Nothing outside this file knows LangGraph or Groq exist - swapping the
 // provider (a different model, a different vendor entirely, a fine-tuned
 // in-house model later) means editing/replacing ai/ticketAnalysisGraph.ts
 // and this one call site, never the controller/route/frontend contract.
 //
-// This IS a static (not lazy/dynamic) import of the LangGraph module —
+// This IS a static (not lazy/dynamic) import of the LangGraph module -
 // tried lazy-loading it via `import()` first (so the mock-only path would
 // never even load LangGraph), but `tsx`'s dev-time module resolver doesn't
 // remap a `.js`-suffixed dynamic-import specifier to the actual `.ts` file
@@ -22,7 +22,7 @@ export type { TicketAnalysisInput, TicketAnalysisOutput };
 // BUILD_LOG.md). The module has no expensive side effects at import time
 // (ChatGroq instances are constructed inside functions, not at module
 // scope; `.compile()` on the graph is pure structure-building, no network
-// call, no API key needed) — so a static import is simply the correct fix,
+// call, no API key needed) - so a static import is simply the correct fix,
 // not a compromise.
 export async function analyzeTicket(input: TicketAnalysisInput): Promise<TicketAnalysisOutput & { source: "groq" | "mock" }> {
   return withSpan(
@@ -39,7 +39,7 @@ export async function analyzeTicket(input: TicketAnalysisInput): Promise<TicketA
         return { ...result, source: "groq" as const };
       } catch (err) {
         // A flaky LLM call is not worth failing the agent's whole request
-        // over — degrade to the mock rather than surface a 500 for what's
+        // over - degrade to the mock rather than surface a 500 for what's
         // an assistive, non-critical feature.
         logger.error({ err }, "AI ticket analysis failed, falling back to mock");
         return { ...mockAnalyzeTicket(input), source: "mock" as const };

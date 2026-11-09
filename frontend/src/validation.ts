@@ -3,7 +3,7 @@ import { TICKET_PRIORITIES } from "./types";
 
 // These mirror the backend's Zod validators (backend/src/validators/*.ts).
 // Duplicating the rules here is what makes React Hook Form show inline
-// errors instantly, without a round trip — but the backend re-validates
+// errors instantly, without a round trip - but the backend re-validates
 // independently and is the real gate; these schemas are UX only.
 export const loginSchema = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email"),

@@ -6,7 +6,7 @@ import { listNotificationsQuerySchema, notificationIdParamSchema } from "../vali
 
 const router = Router();
 
-// Any authenticated role — a Customer can be notified too in the future
+// Any authenticated role - a Customer can be notified too in the future
 // (e.g. "your ticket was updated"); today only the SLA breach job writes
 // notifications (Agents/Admins), but the read side isn't role-restricted.
 router.use(requireAuth);

@@ -17,7 +17,7 @@ function ModeBanner() {
   const { data } = useConfig();
   if (!data) return null;
   return data.mode === "sandbox" ? (
-    <p className="mb-4 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-800">Connected to <b>PayPal Sandbox</b> — real PayPal APIs, test money.</p>
+    <p className="mb-4 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-800">Connected to <b>PayPal Sandbox</b> - real PayPal APIs, test money.</p>
   ) : (
     <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
       <b>Simulated PayPal</b> (no sandbox keys set). Everything works the same; add PAYPAL_CLIENT_ID/SECRET to use the real sandbox.
@@ -123,7 +123,7 @@ export function ShopPage() {
 
   return (
     <div className="mx-auto mt-8 max-w-5xl">
-      <h1 className="text-2xl font-bold text-slate-800">Pixel & Co. — digital store</h1>
+      <h1 className="text-2xl font-bold text-slate-800">Pixel & Co. - digital store</h1>
       <p className="mb-4 text-sm text-slate-500">A demo seller using PayDesk. Buy something with PayPal, then try getting a refund or opening a dispute.</p>
       <ModeBanner />
       {paid && (
@@ -338,7 +338,7 @@ export function SellerDashboardPage() {
                   </div>
                   <div className="text-right text-xs">
                     <p className={c.dispute!.status === "RESOLVED" ? "text-emerald-600" : "text-rose-600"}>{pd.human(c.dispute!.status)}</p>
-                    {c.disputeProposal?.status === "PENDING" && <p className="font-semibold text-indigo-600">🤖 {pd.human(c.disputeProposal.action)} — needs approval</p>}
+                    {c.disputeProposal?.status === "PENDING" && <p className="font-semibold text-indigo-600">🤖 {pd.human(c.disputeProposal.action)} - needs approval</p>}
                     {due && c.dispute!.status !== "RESOLVED" && <p className="text-slate-400">due {formatDistanceToNow(due, { addSuffix: true })}</p>}
                   </div>
                 </Link>
@@ -394,7 +394,7 @@ export function AssistantPage() {
     <div className="mx-auto mt-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-slate-800">Ask PayPal</h1>
       <p className="mb-4 text-sm text-slate-500">
-        Chat with your PayPal account. Powered by PayPal's <b>Agent Toolkit</b> {config?.mode === "simulated" && "(simulated data until sandbox keys are set)"} — read-only, so it can't move money.
+        Chat with your PayPal account. Powered by PayPal's <b>Agent Toolkit</b> {config?.mode === "simulated" && "(simulated data until sandbox keys are set)"} - read-only, so it can't move money.
       </p>
       <div className={`${card} flex min-h-[320px] flex-col gap-3`}>
         {history.length === 0 && (

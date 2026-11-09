@@ -17,7 +17,7 @@ import { Order } from "../models/Order";
 // Unlike the earlier linear version, this graph BRANCHES: an IN_PROGRESS
 // ticket can go to either WAITING_FOR_CUSTOMER or straight to RESOLVED, and
 // a CLOSED ticket can be reopened back to OPEN. One source of truth for
-// "what's a legal move" — everything else defers to this.
+// "what's a legal move" - everything else defers to this.
 const TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   OPEN: ["TRIAGED"],
   TRIAGED: ["ASSIGNED"],
@@ -37,7 +37,7 @@ export function isLegalTransition(current: TicketStatus, next: TicketStatus): bo
 // User document (ticket loaded via findTicketById for a detail view, which
 // runs .populate("customer", ...) to also return the customer's name).
 // Calling .toString() on a populated document does NOT give back the id
-// string — it was silently comparing "[object Object]" to a hex string and
+// string - it was silently comparing "[object Object]" to a hex string and
 // failing 100% of the time, which locked every customer out of their own
 // ticket detail page. This normalizes both shapes to a plain id string.
 function customerIdOf(customer: ITicket["customer"] | { _id: { toString(): string } }): string {
@@ -48,7 +48,7 @@ function customerIdOf(customer: ITicket["customer"] | { _id: { toString(): strin
 }
 
 // Role + ownership rules layered ON TOP of the pure graph above. The graph
-// alone can't know "only the ticket's own customer may close it" — that
+// alone can't know "only the ticket's own customer may close it" - that
 // needs the ticket and the acting user, not just two status strings.
 function isTransitionAllowedForActor(ticket: ITicket, user: JwtPayload, next: TicketStatus): boolean {
   if (!isLegalTransition(ticket.status, next)) return false;
@@ -58,7 +58,7 @@ function isTransitionAllowedForActor(ticket: ITicket, user: JwtPayload, next: Ti
 
   // Two transitions are customer-initiated: closing a resolved ticket, and
   // reopening a closed one. Staff can also do both (e.g. auto-closing a
-  // stale resolved ticket). Every other transition is staff-only — a
+  // stale resolved ticket). Every other transition is staff-only - a
   // customer can't triage, assign, or move their own ticket to IN_PROGRESS.
   if (ticket.status === "RESOLVED" && next === "CLOSED") {
     return (user.role === "CUSTOMER" && isOwner) || isStaff;
@@ -70,7 +70,7 @@ function isTransitionAllowedForActor(ticket: ITicket, user: JwtPayload, next: Ti
 }
 
 // Used by the ticket detail response so the FRONTEND doesn't have to
-// re-implement these role rules — it just renders whatever buttons the
+// re-implement these role rules - it just renders whatever buttons the
 // server says are legal right now. The server still re-checks on the
 // actual PATCH; this is a convenience, not the security boundary.
 export function getAllowedNextStatuses(ticket: ITicket, user: JwtPayload): TicketStatus[] {
@@ -90,7 +90,7 @@ function assertCanView(ticket: { customer: ITicket["customer"] | { _id: { toStri
 }
 
 // Attaches the live-computed SLA numbers to a ticket before it goes out
-// over the API. These are NEVER stored — "3 minutes remaining" is only
+// over the API. These are NEVER stored - "3 minutes remaining" is only
 // true at the instant it's computed, so it's derived fresh on every read
 // instead of risking a stale cached value.
 function withSla(ticket: ITicket) {
@@ -172,7 +172,7 @@ export async function listTickets(user: JwtPayload, query: ListTicketsQuery) {
     search: query.search,
   };
 
-  // Customers only ever see their own tickets — enforced in the query
+  // Customers only ever see their own tickets - enforced in the query
   // itself, not just hidden in the UI.
   if (user.role === "CUSTOMER") {
     filter.customer = user.userId;
@@ -234,7 +234,7 @@ export async function updateTicketStatus(ticketId: string, requestedStatus: Tick
       ticket.status = requestedStatus;
 
       if (requestedStatus === "RESOLVED") ticket.resolvedAt = new Date();
-      // Reopening clears the old resolution timestamp — it's unresolved again,
+      // Reopening clears the old resolution timestamp - it's unresolved again,
       // so the resolution SLA clock (relative to createdAt) resumes ticking.
       if (requestedStatus === "OPEN") ticket.resolvedAt = null;
 
@@ -287,7 +287,7 @@ export async function assignTicketToSelf(ticketId: string, agent: JwtPayload) {
 }
 
 // Admin/agent reassignment to a SPECIFIC agent (e.g. an admin redistributing
-// workload, or Agent A handing off to Agent B) — distinct from "assign to
+// workload, or Agent A handing off to Agent B) - distinct from "assign to
 // self", and requires the ticket already have an agent (i.e. be past TRIAGED).
 export async function reassignTicket(ticketId: string, newAgentId: string, actor: JwtPayload) {
   const ticket = await findTicketDocOr404(ticketId);
@@ -324,7 +324,7 @@ export async function updatePriority(ticketId: string, newPriority: TicketPriori
 
   const { responseMinutes, resolutionMinutes } = await getSlaMinutesForPriority(newPriority);
   ticket.priority = newPriority;
-  // Recompute deadlines from the ORIGINAL creation time — escalating a
+  // Recompute deadlines from the ORIGINAL creation time - escalating a
   // ticket to CRITICAL tightens its deadline immediately, rather than
   // giving it a fresh full SLA window starting now.
   if (!ticket.firstResponseAt) ticket.responseDeadline = addMinutes(ticket.createdAt, responseMinutes);
@@ -364,7 +364,7 @@ export async function updateTags(ticketId: string, tags: string[], actor: JwtPay
 }
 
 // Called by commentService when an agent/admin's first comment lands on a
-// ticket — this is what "first response" means for the SLA's purposes.
+// ticket - this is what "first response" means for the SLA's purposes.
 export async function markFirstResponseIfNeeded(ticketId: string) {
   const ticket = await findTicketDocOr404(ticketId);
   if (!ticket.firstResponseAt) {
@@ -410,7 +410,7 @@ export async function getTicketDocForDownload(ticketId: string, user: JwtPayload
   return ticket;
 }
 
-// Staff-only (route enforces AGENT/ADMIN) — a customer isn't shown internal
+// Staff-only (route enforces AGENT/ADMIN) - a customer isn't shown internal
 // triage tooling like a priority suggestion or a draft agent reply. Recomputed
 // on demand rather than cached on the ticket: it's an assistive suggestion for
 // whoever's looking at the ticket right now, not part of the ticket's

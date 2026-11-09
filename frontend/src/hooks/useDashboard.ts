@@ -5,7 +5,7 @@ export function useDashboardSummary() {
   return useQuery({
     queryKey: ["dashboard", "summary"],
     queryFn: getDashboardSummaryRequest,
-    refetchInterval: 30_000, // SLA countdowns move even without anyone taking an action — refresh periodically
+    refetchInterval: 30_000, // SLA countdowns move even without anyone taking an action - refresh periodically
   });
 }
 

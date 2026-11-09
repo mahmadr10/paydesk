@@ -1,6 +1,6 @@
 import { Ticket } from "../models/Ticket";
 
-// All of these use MongoDB's aggregation pipeline — the database counts and
+// All of these use MongoDB's aggregation pipeline - the database counts and
 // groups the data itself and sends back only the small summarized result.
 // The alternative (fetch every ticket to the server and count in
 // JavaScript) would work fine at 50 tickets and fall over at 50,000; doing
@@ -36,7 +36,7 @@ export async function getSlaBreachCount() {
 }
 
 // Average resolution time in minutes, computed entirely inside MongoDB via
-// $dateDiff — only resolved tickets with a resolvedAt timestamp count.
+// $dateDiff - only resolved tickets with a resolvedAt timestamp count.
 export async function getAverageResolutionMinutes() {
   const result = await Ticket.aggregate([
     { $match: { resolvedAt: { $ne: null } } },

@@ -15,7 +15,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { AssistantPage, MyOrdersPage, SellerDashboardPage, ShopPage } from "./pages/PayDeskPages";
 
 // Charts (recharts) and the admin screens are the heaviest, least-often-hit
-// part of the bundle — a customer or agent who never opens Analytics
+// part of the bundle - a customer or agent who never opens Analytics
 // shouldn't have to download it. React.lazy + Suspense splits each into
 // its own chunk, fetched only the first time its route is actually visited.
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
@@ -29,7 +29,7 @@ function PageFallback() {
   return <p className="mt-8 text-center text-sm text-slate-500">Loading…</p>;
 }
 
-// The "home" route ("/") shows a different page per role — a customer's own
+// The "home" route ("/") shows a different page per role - a customer's own
 // tickets, an agent's queue, or the admin dashboard. One URL, three
 // components, decided by who's logged in.
 // PayDesk: sellers (agent/admin) land on the co-pilot, buyers on their orders.
@@ -41,7 +41,7 @@ function Home() {
 
 function AppRoutes() {
   const { user } = useAuth();
-  useSocketSync(); // mounted once, near the root — see hooks/useSocketSync.ts
+  useSocketSync(); // mounted once, near the root - see hooks/useSocketSync.ts
   useNotificationSocketSync();
 
   return (

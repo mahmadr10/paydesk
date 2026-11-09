@@ -27,7 +27,7 @@ flowchart LR
 In development, the frontend (Vite dev server, :5173) calls the backend
 (:4000) directly. In the Docker/production setup, nginx serves the built
 static frontend and the browser still calls the backend API directly
-(cross-origin, handled by CORS) — nginx here is a static file server, not
+(cross-origin, handled by CORS) - nginx here is a static file server, not
 an API gateway; there is no server-side proxying to hide the backend's
 location for this build.
 
@@ -39,8 +39,8 @@ flowchart TB
         Routes["routes/*<br/>(URL -> middleware chain)"]
         MW["middleware/*<br/>auth, validate, rateLimit, upload, errorHandler"]
     end
-    Controllers["controllers/*<br/>(thin — parse request, call service, shape response)"]
-    Services["services/*<br/>(business logic — state machine, SLA, audit, auth)"]
+    Controllers["controllers/*<br/>(thin - parse request, call service, shape response)"]
+    Services["services/*<br/>(business logic - state machine, SLA, audit, auth)"]
     Repos["repositories/*<br/>(only place that talks to Mongoose models)"]
     Models["models/*<br/>(Mongoose schemas)"]
     Sockets["sockets/*<br/>(Socket.IO auth + emit helpers)"]
@@ -63,7 +63,7 @@ the layer directly below it:
 - **Controllers** are deliberately thin: read `req`, call ONE service
   function, shape the HTTP response (status code, `{ success, data }`
   envelope). No business rules live here.
-- **Services** hold all business logic — the ticket state machine, SLA
+- **Services** hold all business logic - the ticket state machine, SLA
   calculation, audit logging, auth token issuance. This is the layer unit
   tests target directly, without needing HTTP or a database.
 - **Repositories** are the ONLY code that imports a Mongoose model and
@@ -160,15 +160,15 @@ erDiagram
     }
 ```
 
-### Embedded vs. referenced — and why
+### Embedded vs. referenced - and why
 
 | Relationship | Choice | Why |
 |---|---|---|
-| Ticket → attachments | **Embedded** (array of subdocuments on the Ticket) | Attachments are always read/written together with their ticket, never queried independently, and there are at most a handful per ticket — no risk of hitting MongoDB's 16MB document size limit. Embedding avoids an extra query on every ticket-detail load. |
-| Ticket → comments | **Referenced** (`Comment.ticket` FK) | A busy ticket could accumulate hundreds of comments over its lifetime — unbounded growth is exactly what embedding should avoid (a document that keeps growing forever risks that same 16MB ceiling, and forces loading the WHOLE comment history just to read the ticket's title). Comments are also independently paginated/filtered (internal vs. customer-visible), which is far more natural as its own collection. |
-| Ticket → category | **Referenced by NAME (string), not ObjectId** | A deliberate denormalization. Analytics ("tickets by category") and filters group by this field constantly — storing the name directly avoids a `$lookup` join on every single read/aggregation. The cost: renaming a category doesn't retroactively relabel old tickets — for a support-ticket history, that's usually the CORRECT behavior anyway (a ticket keeps the label it had when it was filed). |
-| Ticket → customer / assignedAgent | **Referenced** (ObjectId FK, populated on read) | Users are a genuinely separate entity with their own lifecycle (login, role changes, deactivation) — embedding a customer's data into every one of their tickets would duplicate it everywhere and go stale the moment they changed their name. |
-| AuditLog → entity | **Referenced by ObjectId, generically** (`entity: "Ticket"`, `entityId: ObjectId`) | The audit log needed to point at users, tickets, categories, and SLA policies alike without four separate collections — a generic reference plus a type-tag string covers all of them with one schema. |
+| Ticket → attachments | **Embedded** (array of subdocuments on the Ticket) | Attachments are always read/written together with their ticket, never queried independently, and there are at most a handful per ticket - no risk of hitting MongoDB's 16MB document size limit. Embedding avoids an extra query on every ticket-detail load. |
+| Ticket → comments | **Referenced** (`Comment.ticket` FK) | A busy ticket could accumulate hundreds of comments over its lifetime - unbounded growth is exactly what embedding should avoid (a document that keeps growing forever risks that same 16MB ceiling, and forces loading the WHOLE comment history just to read the ticket's title). Comments are also independently paginated/filtered (internal vs. customer-visible), which is far more natural as its own collection. |
+| Ticket → category | **Referenced by NAME (string), not ObjectId** | A deliberate denormalization. Analytics ("tickets by category") and filters group by this field constantly - storing the name directly avoids a `$lookup` join on every single read/aggregation. The cost: renaming a category doesn't retroactively relabel old tickets - for a support-ticket history, that's usually the CORRECT behavior anyway (a ticket keeps the label it had when it was filed). |
+| Ticket → customer / assignedAgent | **Referenced** (ObjectId FK, populated on read) | Users are a genuinely separate entity with their own lifecycle (login, role changes, deactivation) - embedding a customer's data into every one of their tickets would duplicate it everywhere and go stale the moment they changed their name. |
+| AuditLog → entity | **Referenced by ObjectId, generically** (`entity: "Ticket"`, `entityId: ObjectId`) | The audit log needed to point at users, tickets, categories, and SLA policies alike without four separate collections - a generic reference plus a type-tag string covers all of them with one schema. |
 
 ### Indexes (see `backend/src/models/Ticket.ts`)
 
@@ -176,28 +176,28 @@ erDiagram
 |---|---|
 | `{ status: 1 }` | Filtering the ticket list/queue by status alone |
 | `{ assignedAgent: 1 }`, `{ customer: 1 }` | "My tickets" (customer) / "my queue" (agent) lookups |
-| `{ assignedAgent: 1, status: 1, createdAt: -1 }` (compound) | The actual agent-queue query: filtered by agent AND status, sorted newest-first — one index satisfies filter AND sort together. Measured impact in [BUILD_LOG.md](BUILD_LOG.md#performance-pass). |
+| `{ assignedAgent: 1, status: 1, createdAt: -1 }` (compound) | The actual agent-queue query: filtered by agent AND status, sorted newest-first - one index satisfies filter AND sort together. Measured impact in [BUILD_LOG.md](BUILD_LOG.md#performance-pass). |
 | `{ customer: 1, status: 1, createdAt: -1 }` (compound) | Same shape, customer-side ("My Tickets" filtered + sorted) |
 | `{ priority: 1, status: 1 }` | Dashboard "critical tickets still open" style queries |
 | `AuditLog: { entityId: 1 }`, `{ timestamp: 1 }` | "History for this ticket" / audit log browsing newest-first |
-| `RefreshToken: { expiresAt: 1 }` (TTL index) | Automatic cleanup — MongoDB deletes expired refresh tokens itself |
+| `RefreshToken: { expiresAt: 1 }` (TTL index) | Automatic cleanup - MongoDB deletes expired refresh tokens itself |
 
 ### Potential scaling problems, honestly
 
 - **`category` as a denormalized string** means renaming a category doesn't
-  cascade to existing tickets (see table above) — a feature here, but worth
+  cascade to existing tickets (see table above) - a feature here, but worth
   knowing it's a deliberate trade-off if requirements ever change.
 - **Regex search on `title`** (`ticketRepository.ts`) is fine at the scale
-  tested (10k tickets — see [BUILD_LOG.md](BUILD_LOG.md#performance-pass))
+  tested (10k tickets - see [BUILD_LOG.md](BUILD_LOG.md#performance-pass))
   but doesn't scale to millions of documents or fuzzy/relevance-ranked
   search. A real search need would call for Atlas Search or a dedicated
-  search engine (Elasticsearch/Meilisearch) — noted, not built.
+  search engine (Elasticsearch/Meilisearch) - noted, not built.
 - **Attachments on local disk** (`backend/uploads/`) don't survive a
   container being recreated unless the volume is preserved (docker-compose
   does mount a volume for this) and don't horizontally scale across
-  multiple backend instances — a real multi-instance deployment would need
+  multiple backend instances - a real multi-instance deployment would need
   S3-compatible object storage instead.
-- **Socket.IO's in-memory room state** is per-process — running multiple
+- **Socket.IO's in-memory room state** is per-process - running multiple
   backend instances behind a load balancer would need the Socket.IO Redis
   adapter so a socket connected to instance A still receives an event
   emitted from instance B. Not needed at this project's scale (single
@@ -237,7 +237,7 @@ sequenceDiagram
 
 ## Background Jobs
 
-`jobs/slaBreachJob.ts` — a `node-cron` job running every minute, checking
+`jobs/slaBreachJob.ts` - a `node-cron` job running every minute, checking
 for tickets that just crossed their response or resolution SLA deadline
 while still active (not `RESOLVED`/`CLOSED`), and pushing a persisted
 [Notification](#) + a live `notification:new` Socket.IO event to whoever
@@ -257,32 +257,32 @@ flowchart LR
 carries `responseBreachNotified`/`resolutionBreachNotified` booleans, set
 the first time each is found breached. `computeSlaStatus()` (used for the
 LIVE "breached: true/false" shown on a ticket) is intentionally stateless
-and recomputed fresh on every read — a notification needs the opposite
+and recomputed fresh on every read - a notification needs the opposite
 property, firing exactly once, which is what the flag is for.
 
 **A real backward-compatibility bug this surfaced**: the query originally
-read `{ resolutionBreachNotified: false }` — which, run against the demo
+read `{ resolutionBreachNotified: false }` - which, run against the demo
 tickets seeded *before* this field existed in the schema, matched **zero**
 tickets, because MongoDB's `{ field: false }` filter doesn't match a
 document where the field is simply absent, only one where it's explicitly
 stored as `false`. Fixed to `{ $ne: true }`, which correctly treats "never
-set" and "explicitly false" as the same thing — both mean "not yet
+set" and "explicitly false" as the same thing - both mean "not yet
 notified." A schema evolving underneath already-written documents is a
 completely ordinary situation in a real deployment, not an edge case
 invented for this write-up.
 
-**Manually triggerable** (`POST /admin/jobs/sla-check/run`, Admin-only) —
+**Manually triggerable** (`POST /admin/jobs/sla-check/run`, Admin-only) -
 the exact same function the cron calls, for on-demand use (and so a demo
 doesn't have to sit and wait up to 60 seconds for the next tick).
 
-**Enabled by `JOBS_ENABLED`** (default `true`) — off in the Vitest test
+**Enabled by `JOBS_ENABLED`** (default `true`) - off in the Vitest test
 env implicitly (the job is only started from `index.ts`, which the test
-suite never imports — it drives `app.ts` directly via Supertest) and
+suite never imports - it drives `app.ts` directly via Supertest) and
 explicitly in the E2E harness, same pattern as `OTEL_ENABLED`/`AI_ENABLED`.
 
 ## AI Dev Assistant
 
-A second, separate AI feature from Ticket AI Assist above — an internal
+A second, separate AI feature from Ticket AI Assist above - an internal
 developer/admin tool, not part of the ticket workflow. `POST
 /admin/dev-assistant/ask` (Admin-only) takes a free-text question about
 *this codebase* ("Why are ticket updates sometimes duplicated?", "Where is
@@ -291,7 +291,7 @@ investigation:
 
 ```mermaid
 flowchart LR
-    START((START)) --> plan["plan<br/>(orchestrator — LLM picks<br/>which agents are relevant)"]
+    START((START)) --> plan["plan<br/>(orchestrator - LLM picks<br/>which agents are relevant)"]
     plan -->|selected| repo["repoAgent<br/>(searches TS source)"]
     plan -->|selected| git["gitAgent<br/>(recent commit history)"]
     plan -->|selected| log["logAgent<br/>(recent structured logs)"]
@@ -300,11 +300,11 @@ flowchart LR
     git --> diagnosis
     log --> diagnosis
     test --> diagnosis
-    diagnosis --> suggestFix["suggestFix<br/>(proposes a real patch,<br/>IF confident — else declines)"]
+    diagnosis --> suggestFix["suggestFix<br/>(proposes a real patch,<br/>IF confident - else declines)"]
     suggestFix --> END((END))
 ```
 
-**Only the agents the planner actually selects run at all** — asking a
+**Only the agents the planner actually selects run at all** - asking a
 general architecture question doesn't spin up a ~10-15s test run; asking
 about a bug does. This is a genuine planning step (an LLM call with
 structured output choosing a subset of `["repo","git","log","test"]`), not
@@ -314,28 +314,28 @@ updates duplicated" correctly selected `repo` + `log` and skipped `git`/
 `repo`.
 
 **Structural safety boundary, not a prompt instruction**: every tool in
-`ai/devAssistant/tools.ts` is read-only — repo search (pure in-memory grep,
+`ai/devAssistant/tools.ts` is read-only - repo search (pure in-memory grep,
 no shell-out), git log/diff (read commands only), log search (reads an
 in-memory ring buffer), test run (executes the suite but writes nothing).
 There is no write/patch/apply tool anywhere in this file for the GRAPH to
-call — the graph itself (`plan`/agents/`diagnosisAgent`/`suggestFix`)
+call - the graph itself (`plan`/agents/`diagnosisAgent`/`suggestFix`)
 cannot touch a file, full stop, regardless of what a cleverly-worded
 question asks it to do.
 
-The graph's `suggestFix` node CAN propose a real, specific patch (below) —
+The graph's `suggestFix` node CAN propose a real, specific patch (below) -
 but proposing is all it does. Applying one is a completely separate code
 path (`ai/devAssistant/applyFix.ts`), reachable only through its own
 endpoint, only ever called after a human has seen the diff and clicked
 "Apply" in the UI. Nothing inside the investigation graph can reach that
 path on its own. This directly follows the brief's own stated principle:
 "AI can recommend and automate; humans retain control over high-impact
-actions" — applied literally as an architectural boundary, not a
+actions" - applied literally as an architectural boundary, not a
 suggestion the model could be talked out of.
 
 ### Suggested fixes and the one gated write path
 
 `suggestFix` reads the single file the repo agent's evidence points at
-(capped at 400 lines) and asks the model for a specific fix — but only
+(capped at 400 lines) and asks the model for a specific fix - but only
 returns one if `fileContent.includes(oldCode)` is independently verified
 true server-side; the model's own claim that its snippet matches is never
 trusted alone. If nothing meets that bar, it declines rather than guess:
@@ -348,11 +348,11 @@ flowchart LR
     Match --> Write["write the file"]
     Write --> Test["run the REAL test suite"]
     Test -->|pass| Keep["change kept"]
-    Test -->|fail| Revert["automatically reverted —<br/>original content restored"]
+    Test -->|fail| Revert["automatically reverted -<br/>original content restored"]
 ```
 
 Every one of those checks is enforced in `applyFix.ts`, independent of
-anything the LLM said — a targetFile outside `backend/src`/`frontend/src`,
+anything the LLM said - a targetFile outside `backend/src`/`frontend/src`,
 inside `ai/devAssistant/` itself (self-modification refused), or the wrong
 extension is rejected before the file is even opened. `oldCode` matching
 zero or more-than-one location in the CURRENT file (which may have changed
@@ -364,7 +364,7 @@ self-correcting, not something a human has to notice and undo later.
 function that added instead of subtracted) was diagnosed correctly, a real
 fix was generated with `oldCode` matching the live file exactly, applied
 through the actual browser UI's "Apply Fix" button, the real 44-test suite
-ran and passed, and the file was genuinely corrected on disk — see
+ran and passed, and the file was genuinely corrected on disk - see
 [BUILD_LOG.md](BUILD_LOG.md) for the full verification, including two more
 subtle ranking bugs this same testing pass caught and fixed (a generic
 word crowding out the specific identifier in repo search results, and the
@@ -372,7 +372,7 @@ fix-target file being picked by match COUNT instead of match RELEVANCE).
 
 **Live progress over Socket.IO**: each node emits a `devAssistant:step`
 event (`{ agent, status: "running"|"done", summary }`) to the asking
-admin's own room as it runs — the frontend's Admin → Dev Assistant page
+admin's own room as it runs - the frontend's Admin → Dev Assistant page
 renders this as agent boxes lighting up in real time, not a single opaque
 spinner. Reuses the exact real-time infrastructure from the ticket workflow
 (same per-user room pattern as `emitTicketUpdated`), not a parallel system.
@@ -380,18 +380,18 @@ spinner. Reuses the exact real-time infrastructure from the ticket workflow
 **Mock fallback** (`ai/devAssistant/mockOrchestrator.ts`): no `GROQ_API_KEY`
 → a keyword heuristic picks agents instead of an LLM, and the "diagnosis"
 is the raw findings, clearly labeled as such rather than dressed up as an
-AI opinion — same "must run with zero API key" principle as everywhere
+AI opinion - same "must run with zero API key" principle as everywhere
 else AI shows up in this app.
 
 **A real bug this surfaced** (see [BUILD_LOG.md](BUILD_LOG.md) for the full
 story): live testing initially came back "no matches" for a genuinely
-answerable question ("where is authentication implemented" — auth code
+answerable question ("where is authentication implemented" - auth code
 obviously exists) because keyword extraction treated a multi-word phrase as
 one literal substring instead of several OR-able terms, and because real
 code rarely spells out the same words a question would ("authentication"
 vs. the actual `auth.ts`/`JWT`/`login` vocabulary). Fixed with proper
 keyword extraction plus a small synonym table for this codebase's actual
-terminology — not a general semantic search (real added complexity, out of
+terminology - not a general semantic search (real added complexity, out of
 scope for a bonus feature), an honest bounded middle ground instead.
 
 ## Observability
@@ -400,10 +400,10 @@ Two complementary layers, deliberately not the same thing:
 
 - **Structured logs** (Pino, see [SECURITY.md](SECURITY.md) and
   `observability/logger.ts`/`requestLogger.ts`) answer "what happened, in
-  words" — one JSON line per request, correlated to a client-visible
+  words" - one JSON line per request, correlated to a client-visible
   `requestId`.
 - **Traces + metrics** (OpenTelemetry, `observability/tracing.ts`/`otel.ts`)
-  answer "where did the time go, across layers, for THIS one request" —
+  answer "where did the time go, across layers, for THIS one request" -
   something a log line's single duration number can't show.
 
 ```mermaid
@@ -418,39 +418,39 @@ flowchart LR
 
 **Why three different instrumentation strategies for one waterfall?** The
 outer three (HTTP/Express/MongoDB) are all real libraries `require()`d by
-the app — OpenTelemetry's Node auto-instrumentation patches them at
+the app - OpenTelemetry's Node auto-instrumentation patches them at
 require-time (see `tracing.ts`'s own comment on why it MUST be the first
 import in `index.ts`), so those spans appear with zero application code
 written for them. The **Service** layer is different: it's plain
-TypeScript function calls, nothing to monkey-patch — so it's invisible in
+TypeScript function calls, nothing to monkey-patch - so it's invisible in
 a trace unless something wraps it in a span on purpose. `observability/
 otel.ts` exports a small `withSpan()` helper, used explicitly around
 `ticketService.createTicket`, `ticketService.updateTicketStatus`, and
-`dashboardService.getSummary`/`getAnalytics` — one concrete instance of the
+`dashboardService.getSummary`/`getAnalytics` - one concrete instance of the
 exact chain the spec names, plus the exact route the spec names as the
 thing to investigate for latency.
 
-**Where traces go**: no collector required by default — with
+**Where traces go**: no collector required by default - with
 `OTEL_EXPORTER_OTLP_ENDPOINT` unset, spans print straight to the console
 (true "zero setup"). Set it (or just run `docker compose up`, which wires
 it automatically to the bundled Jaeger service) and traces export over
-OTLP/HTTP to a real trace UI at http://localhost:16686 instead — same code,
+OTLP/HTTP to a real trace UI at http://localhost:16686 instead - same code,
 no rebuild, just a different env var.
 
 **Metrics**: `@opentelemetry/exporter-prometheus` starts its own tiny HTTP
 server (`OTEL_METRICS_PORT`, default `9464`) serving `/metrics` in
-Prometheus's scrape format directly — no collector needed either; a real
+Prometheus's scrape format directly - no collector needed either; a real
 Prometheus instance (or Grafana on top of one) can point at it as-is.
 
 **Logs and traces are correlated automatically**, not just conceptually
 adjacent: `getNodeAutoInstrumentations()` includes a Pino instrumentation
 that injects the active span's `trace_id`/`span_id` into every structured
-log line for free (verified directly — a real request's log line carries
+log line for free (verified directly - a real request's log line carries
 both alongside the usual `req`/`res`/`responseTime` fields). In a real
 Jaeger deployment this is what lets you go from "grep the logs for an
 error" to "open the exact trace that produced it" in one step.
 
-**What's NOT done**: a Grafana dashboard visualizing the Prometheus data —
+**What's NOT done**: a Grafana dashboard visualizing the Prometheus data -
 the metrics endpoint exists and is scrape-ready, wiring an actual Grafana
 service into `docker-compose.yml` was judged lower-value than the tracing
 work itself for the time available.
@@ -465,7 +465,7 @@ draft first response for a ticket.
 flowchart LR
     Ctrl["ticketController<br/>.analyzeWithAi"]
     Svc["ticketService<br/>.getAiAnalysis"]
-    AI["aiService<br/>.analyzeTicket()<br/>— the ONE seam"]
+    AI["aiService<br/>.analyzeTicket()<br/>- the ONE seam"]
     Graph["ticketAnalysisGraph<br/>(LangGraph + Groq)"]
     Mock["mockAnalyzer<br/>(keyword rules)"]
 
@@ -487,39 +487,39 @@ flowchart LR
 ```
 
 `classify` and `summarize` only need the ticket's raw title/description, so
-they run as independent parallel branches — LangGraph batches everything
+they run as independent parallel branches - LangGraph batches everything
 reachable from `START` into one superstep. `draftResponse` genuinely can't
 start until both finish (it references the classified category/priority AND
 the summary when drafting a reply), so it's a real fan-in, not just two
 sequential steps forced apart. `classify` uses `.withStructuredOutput(zodSchema)`
-so its output is a typed `{ category, priority }`, not free text to parse —
+so its output is a typed `{ category, priority }`, not free text to parse -
 and the returned category is validated against the ticket system's actual
 active categories, falling back to the first valid one rather than trusting
 an LLM not to hallucinate a category that doesn't exist.
 
 **Replaceable service abstraction**: every caller (`ticketService`,
 transitively the controller) only ever imports `aiService.analyzeTicket()`.
-Nothing outside `aiService.ts` knows LangGraph or Groq exist — swapping the
+Nothing outside `aiService.ts` knows LangGraph or Groq exist - swapping the
 provider means editing/replacing `ai/ticketAnalysisGraph.ts` and this one
 call site, never the controller, route, or frontend contract. (A dynamic
 `import()` was tried first, specifically to keep the LangGraph module out of
-the mock-only path entirely — reverted after live verification caught it
+the mock-only path entirely - reverted after live verification caught it
 silently failing under `tsx`'s dev-time module resolution; see
 [BUILD_LOG.md](BUILD_LOG.md#ai-ticket-assistant-langgraph--groq) for what
 that actually looked like. The module has no expensive side effects at
 import time, so a static import costs nothing.)
 
 **Mock fallback** (`ai/mockAnalyzer.ts`): deterministic keyword matching
-(e.g. "500"/"down"/"outage" → `CRITICAL`), not a real classifier — good
+(e.g. "500"/"down"/"outage" → `CRITICAL`), not a real classifier - good
 enough to prove the feature's full shape (API contract, audit log, UI) with
 zero network calls, which is also why it's what the automated test suite
 exercises (no `GROQ_API_KEY` secret is configured in CI).
 
 **Not persisted on the ticket**: like `sla` (see above), an analysis is
-recomputed fresh each time an agent clicks "Analyze" — it's a suggestion for
+recomputed fresh each time an agent clicks "Analyze" - it's a suggestion for
 whoever's looking at the ticket right now, not part of the ticket's
 authoritative state. Every request is still recorded to the audit trail
-(`AI_ANALYSIS_REQUESTED`, with the source — `groq` or `mock` — in its
+(`AI_ANALYSIS_REQUESTED`, with the source - `groq` or `mock` - in its
 metadata) so there's a record of when AI assistance was used.
 
 ## Authentication flow
@@ -542,7 +542,7 @@ sequenceDiagram
     API->>API: hash cookie value, look up in DB, verify not expired/revoked
     API->>API: REVOKE old refresh token, issue a NEW one (rotation)
     API-->>B: new { accessToken } + new refresh cookie
-    Note over B: axios interceptor does this automatically and retries<br/>the original failed request once — invisible to the user
+    Note over B: axios interceptor does this automatically and retries<br/>the original failed request once - invisible to the user
 
     B->>API: POST /auth/logout
     API->>API: revoke refresh token in DB, clear cookie

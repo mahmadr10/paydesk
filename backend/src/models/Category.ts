@@ -2,7 +2,7 @@ import { Schema, model, Document, Types } from "mongoose";
 
 // Categories used to be a hardcoded enum. An admin needs to "configure
 // categories" per the spec, so they're now a real collection an admin can
-// add to / retire — tickets store the category NAME (a string), not a
+// add to / retire - tickets store the category NAME (a string), not a
 // reference id. That's a deliberate denormalization: ticket documents and
 // analytics queries ("tickets by category") stay simple string
 // group-bys/filters instead of needing a $lookup join on every read. The

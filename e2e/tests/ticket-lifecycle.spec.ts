@@ -8,7 +8,7 @@ import { test, expect, type Page } from "@playwright/test";
 //     → Customer closes the resolved ticket
 //
 // Each step happens in a REAL browser tab, against the REAL running
-// frontend + backend — this is what actually proves the pieces work
+// frontend + backend - this is what actually proves the pieces work
 // together (routing, forms, API calls, the state machine's role checks),
 // not just that each piece works in isolation.
 const stamp = Date.now();
@@ -31,12 +31,12 @@ test.describe.serial("Full ticket lifecycle", () => {
   test("customer registers and creates a ticket", async ({ page }) => {
     await register(page, "E2E Customer", customerEmail, "CUSTOMER");
 
-    await page.getByRole("link", { name: "New Ticket" }).click();
-    await expect(page).toHaveURL("/tickets/new");
+    // PayDesk: buyers mostly use smart intake; the manual form is still at /tickets/new.
+    await page.goto("/tickets/new");
 
     await page.getByPlaceholder("Title").fill(ticketTitle);
     await page.getByPlaceholder("Describe the issue…").fill("Our payment API is returning HTTP 500 errors.");
-    // Category options are seeded server-side (config/seed.ts) — "Payment" is one of the defaults.
+    // Category options are seeded server-side (config/seed.ts) - "Payment" is one of the defaults.
     await page.locator("select").first().selectOption("Payment");
     await page.getByRole("button", { name: "Create ticket" }).click();
 
@@ -48,6 +48,9 @@ test.describe.serial("Full ticket lifecycle", () => {
 
   test("agent triages, assigns, progresses, and resolves the ticket", async ({ page }) => {
     await register(page, "E2E Agent", agentEmail, "AGENT");
+    // Sellers land on the co-pilot; the full case list is at /queue.
+    await expect(page.getByRole("heading", { name: "Seller co-pilot" })).toBeVisible();
+    await page.getByRole("link", { name: "All cases" }).click();
     await expect(page.getByRole("heading", { name: "Ticket Queue" })).toBeVisible();
 
     // Find the ticket the customer just created by its unique title.
@@ -55,7 +58,7 @@ test.describe.serial("Full ticket lifecycle", () => {
     await page.getByRole("link", { name: ticketTitle }).click();
     await expect(page).toHaveURL(/\/tickets\/[a-f0-9]{24}/);
 
-    // OPEN -> TRIAGED (the only legal next step — the button text comes
+    // OPEN -> TRIAGED (the only legal next step - the button text comes
     // straight from the server's allowedNextStatuses, proving the state
     // machine and the UI agree on what's legal).
     await page.getByRole("button", { name: /Move to TRIAGED/i }).click();
@@ -80,10 +83,11 @@ test.describe.serial("Full ticket lifecycle", () => {
     await page.getByRole("button", { name: "Log in" }).click();
     await expect(page).toHaveURL("/");
 
+    await page.getByRole("link", { name: "My cases" }).click();
     await page.getByRole("link", { name: ticketTitle }).click();
     await expect(page.getByText("RESOLVED")).toBeVisible();
 
-    // This is the customer-only transition (RESOLVED -> CLOSED) — proving
+    // This is the customer-only transition (RESOLVED -> CLOSED) - proving
     // the role rule the other direction: a customer CAN do this one.
     await page.getByRole("button", { name: "Close ticket" }).click();
     await expect(page.getByText("CLOSED")).toBeVisible();

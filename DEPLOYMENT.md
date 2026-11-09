@@ -3,9 +3,9 @@
 ## MongoDB Atlas setup
 
 1. Sign up / log in at https://cloud.mongodb.com
-2. **Create a free (M0) cluster** — any region, any name.
+2. **Create a free (M0) cluster** - any region, any name.
 3. **Database Access** → create a database user (username + password;
-   "Autogenerate Secure Password" is fine, just save it — Atlas won't show
+   "Autogenerate Secure Password" is fine, just save it - Atlas won't show
    it again).
 4. **Network Access** → **Add IP Address** → **Allow Access From Anywhere**
    (`0.0.0.0/0`) for this project's purposes; a real production deployment
@@ -20,10 +20,10 @@
 
 | Variable | Required | Notes |
 |---|---|---|
-| `NODE_ENV` | no (default `development`) | Set `production` on a real deploy — disables pretty-printed logs, marks refresh cookies `secure` |
+| `NODE_ENV` | no (default `development`) | Set `production` on a real deploy - disables pretty-printed logs, marks refresh cookies `secure` |
 | `PORT` | no (default `4000`) | |
 | `MONGODB_URI` | **yes** | Atlas connection string (above) or any MongoDB instance |
-| `JWT_ACCESS_SECRET` | **yes** | Long random string — signs access tokens |
+| `JWT_ACCESS_SECRET` | **yes** | Long random string - signs access tokens |
 | `JWT_REFRESH_COOKIE_NAME` | no (default `refreshToken`) | |
 | `FRONTEND_ORIGIN` | no (default `http://localhost:5173`) | Must match the frontend's real URL in production, for CORS + cookie scoping |
 | `LOG_LEVEL` | no (default `info`) | Pino level: `trace\|debug\|info\|warn\|error\|fatal` |
@@ -31,7 +31,7 @@
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | no (unset = console) | e.g. `http://localhost:4318` for a local Jaeger/collector; unset prints traces to the console instead |
 | `OTEL_METRICS_PORT` | no (default `9464`) | Prometheus metrics served at `/metrics` on this port |
 
-### `frontend/.env` (build-time — see note below)
+### `frontend/.env` (build-time - see note below)
 
 | Variable | Notes |
 |---|---|
@@ -39,7 +39,7 @@
 | `VITE_SOCKET_URL` | Backend's base (no `/api/v1`), e.g. `https://api.yourapp.com` |
 
 **Important**: Vite bakes `VITE_*` variables into the compiled JS at
-**build** time — there's no way to change them after the static files are
+**build** time - there's no way to change them after the static files are
 built (unlike the backend's env vars, which are read at container start).
 Set them correctly *before* running `npm run build` / the Docker build.
 
@@ -56,7 +56,7 @@ local Mongo). Details on the container design (multi-stage builds, non-root
 user, volumes) are commented directly in `backend/Dockerfile` and
 `frontend/Dockerfile`.
 
-Once up: traces at http://localhost:16686 (Jaeger UI — click a trace and
+Once up: traces at http://localhost:16686 (Jaeger UI - click a trace and
 you'll see `HTTP → Express → Service → MongoDB` spans nested, per
 [ARCHITECTURE.md](ARCHITECTURE.md#observability)), metrics at
 http://localhost:9464/metrics.
@@ -73,16 +73,16 @@ http://localhost:9464/metrics.
 `frontend/` as separate jobs. See [TESTING.md](TESTING.md#demonstrating-a-failing--passing-ci-run)
 for how to demonstrate it actually catching a regression.
 
-There is currently **no CD (auto-deploy) job** — see the next section for
+There is currently **no CD (auto-deploy) job** - see the next section for
 why, and what adding one would look like.
 
 ## Deploying live
 
 This step needs accounts on a hosting platform, which only the project
 owner can create. The chosen split: **Render** for the backend, **Vercel**
-for the frontend — Render because it builds directly from
+for the frontend - Render because it builds directly from
 `backend/Dockerfile` and keeps a persistent Node process alive (required
-for Socket.IO — a serverless platform like plain Vercel functions can't
+for Socket.IO - a serverless platform like plain Vercel functions can't
 hold a WebSocket connection open), Vercel because it's purpose-built for a
 static Vite/React build with zero configuration.
 
@@ -96,21 +96,21 @@ A `render.yaml` Blueprint at the repo root does most of this for you:
    repo → Render reads `render.yaml` and shows the one service it defines
    (`servicedesk-backend`, building from `backend/Dockerfile`).
 3. It'll prompt for the env vars marked `sync: false` in that file:
-   - `MONGODB_URI` — your Atlas connection string (see setup above)
-   - `JWT_ACCESS_SECRET` — a long random string (generate a new one, don't
+   - `MONGODB_URI` - your Atlas connection string (see setup above)
+   - `JWT_ACCESS_SECRET` - a long random string (generate a new one, don't
      reuse the local dev value)
-   - `FRONTEND_ORIGIN` — leave blank for now, come back and set it once
+   - `FRONTEND_ORIGIN` - leave blank for now, come back and set it once
      Vercel gives you a URL (step below)
-   - `GROQ_API_KEY` — optional; omit it and the AI features run their mock
+   - `GROQ_API_KEY` - optional; omit it and the AI features run their mock
      fallback in production instead
-4. **Apply** — Render builds the Docker image and deploys it. Takes a few
+4. **Apply** - Render builds the Docker image and deploys it. Takes a few
    minutes on the free tier's first build. You'll get a URL like
    `https://servicedesk-backend-xxxx.onrender.com`.
 5. Confirm it's alive: `https://<that-url>/api/health` should return
    `{"success":true,...}`.
 
 There's no bundled Jaeger on Render (that's a `docker-compose.yml`
-convenience for local dev) — traces print to Render's own log stream
+convenience for local dev) - traces print to Render's own log stream
 instead, or point `OTEL_EXPORTER_OTLP_ENDPOINT` at a real hosted OTel
 backend (Grafana Cloud, Honeycomb, etc.) if you have one.
 
@@ -142,5 +142,5 @@ this) instead of leaving it open to anywhere.
 **Adding actual CD**: a `deploy` job in `ci.yml`, gated on
 `push: branches: [main]` and the existing jobs passing, that calls the
 chosen platform's deploy CLI/API (Render and Railway both have GitHub
-Actions available) — not added here since it needs real platform
+Actions available) - not added here since it needs real platform
 credentials as GitHub Secrets, which only the account owner can provision.

@@ -45,7 +45,7 @@ export async function loginUser(input: LoginInput) {
   const user = await userRepo.findUserByEmail(input.email);
   if (!user || !user.isActive) {
     // Same generic message whether the account doesn't exist, is
-    // deactivated, or the password is wrong — an attacker probing emails
+    // deactivated, or the password is wrong - an attacker probing emails
     // learns nothing from the response either way.
     throw new AppError(401, "INVALID_CREDENTIALS", "Incorrect email or password.");
   }
@@ -63,7 +63,7 @@ export async function loginUser(input: LoginInput) {
 // brand new one. Why rotate instead of reusing the same refresh token for
 // 30 days? If a refresh token is ever stolen (e.g. from a compromised
 // machine) and BOTH the attacker and the real user try to use it, the
-// second use fails (already revoked) — an app that checks for that reuse
+// second use fails (already revoked) - an app that checks for that reuse
 // can detect the theft. We don't build the theft-detection alerting here
 // (out of scope for this build), but rotation is what makes it *possible*.
 export async function refreshTokens(rawRefreshToken: string) {

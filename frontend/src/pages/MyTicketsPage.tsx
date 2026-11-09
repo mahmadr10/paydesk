@@ -12,7 +12,7 @@ export function MyTicketsPage() {
   const [page, setPage] = useState(1);
 
   // TanStack Query's cache key includes these params, so changing the
-  // filter automatically fetches (and caches) that specific slice — no
+  // filter automatically fetches (and caches) that specific slice - no
   // manual useEffect/fetch/setState wiring, and results from a filter you
   // switch back to come back instantly from cache instead of reloading.
   const { data, isLoading, error } = useTicketList({

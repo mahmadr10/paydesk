@@ -31,7 +31,7 @@ export function OrderCard({ order }: { order: Order }) {
         <p>Refunded: <b>{pd.money(order.refundedTotal, order.currency)}</b></p>
         <p>Downloads: <b>{order.fulfillment?.accessCount ?? 0}</b></p>
       </div>
-      <p className="mt-2 truncate text-[11px] text-slate-400">Capture {order.captureId ?? "—"} · {order.paypalMode === "sandbox" ? "PayPal Sandbox" : "Simulated PayPal"}</p>
+      <p className="mt-2 truncate text-[11px] text-slate-400">Capture {order.captureId ?? "-"} · {order.paypalMode === "sandbox" ? "PayPal Sandbox" : "Simulated PayPal"}</p>
     </div>
   );
 }

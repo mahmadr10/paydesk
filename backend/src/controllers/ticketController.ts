@@ -94,7 +94,7 @@ export async function downloadAttachment(req: Request, res: Response) {
     throw new AppError(404, "NOT_FOUND", "Attachment not found.");
   }
   // We check authorization (assertCanView, above) and look up the ON-DISK
-  // filename ourselves from the ticket document — we never let the request
+  // filename ourselves from the ticket document - we never let the request
   // supply a raw file path, which is what prevents path-traversal attacks
   // against this endpoint.
   const filePath = path.join(UPLOAD_DIR, attachment.filename);

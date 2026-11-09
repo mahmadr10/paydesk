@@ -1,6 +1,6 @@
 name: CI
 
-# Runs on every pull request AND every push to main — a PR shows you the
+# Runs on every pull request AND every push to main - a PR shows you the
 # result before merging; main gives a permanent record that the branch
 # stays green over time.
 on:
@@ -25,7 +25,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       # Install → Lint → Type Check → Unit Tests → Integration Tests → Build
-      # — the exact pipeline order the spec asks for. Each step only runs if
+      # - the exact pipeline order the spec asks for. Each step only runs if
       # the previous one succeeded (GitHub Actions' default), so a lint
       # failure stops the pipeline before wasting time running tests against
       # code that doesn't even pass style checks.
@@ -41,7 +41,7 @@ jobs:
       # vitest.config.mts's globalSetup spins up an in-memory MongoDB, so
       # this single "test" step covers BOTH the unit tests (state machine,
       # SLA math) and the integration tests (Supertest driving the real
-      # Express app) — no separate database service container needed in CI.
+      # Express app) - no separate database service container needed in CI.
       - name: Unit + integration tests
         run: npm test
 

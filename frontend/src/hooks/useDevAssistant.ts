@@ -5,7 +5,7 @@ import { askDevAssistantRequest, applyDevAssistantFixRequest } from "../api/devA
 import type { DevAssistantResult, DevAssistantStep } from "../types";
 
 // The request itself is a normal blocking POST (the backend runs the whole
-// graph before responding) — the socket listener is purely for the LIVE
+// graph before responding) - the socket listener is purely for the LIVE
 // "agents lighting up" visual while that request is in flight, not the
 // data-fetching mechanism itself. Steps accumulate per-agent (a "running"
 // step then its matching "done" step overwrite the same slot) rather than
@@ -43,7 +43,7 @@ export function useDevAssistant() {
   return { ask, steps, result, error, isPending };
 }
 
-// Separate from the mutation above on purpose — applying a fix is a
+// Separate from the mutation above on purpose - applying a fix is a
 // distinct, explicit, human-triggered action (never chained automatically
 // after `ask`), so it gets its own pending/error state rather than
 // overloading the investigation's.

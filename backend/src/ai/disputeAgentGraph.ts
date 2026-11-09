@@ -16,7 +16,7 @@ import type { DisputeSnapshot } from "../services/paypalService";
 //                         capture (Payments API) + our order: what was sold,
 //                         when it was delivered, whether the buyer downloaded
 //                         it, what was refunded already, past support cases.
-//   assess          LLM   Accept, offer, or contest — with a win estimate.
+//   assess          LLM   Accept, offer, or contest - with a win estimate.
 //   policyGuard     CODE  Only actions PayPal currently allows; no contesting
 //                         "not received" without delivery proof; offers below
 //                         the disputed amount; nothing on resolved disputes.
@@ -329,7 +329,7 @@ function buildEvidenceText(state: S): string {
   const o = state.input.order;
   const f = state.facts;
   const lines = [
-    "PAYDESK — DISPUTE EVIDENCE (generated from store records)",
+    "PAYDESK - DISPUTE EVIDENCE (generated from store records)",
     `Dispute: ${f.disputeId}`,
     `Reason claimed: ${human(f.reason)}`,
     "",

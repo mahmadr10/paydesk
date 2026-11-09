@@ -18,7 +18,7 @@ export async function getSummary() {
 
 // Named directly in the spec as the example of a route to investigate for
 // latency ("Investigate why /api/v1/dashboard/analytics has high latency.
-// Use logs and traces to identify the slow operation.") — it fans out into
+// Use logs and traces to identify the slow operation.") - it fans out into
 // FOUR separate aggregation queries, which is exactly the kind of thing a
 // trace waterfall makes obvious at a glance (four sibling MongoDB spans
 // under this one, each individually timed) in a way a single "200 OK in

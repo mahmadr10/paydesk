@@ -14,7 +14,7 @@ export async function updateUser(req: Request, res: Response) {
   res.status(200).json({ success: true, data: { user } });
 }
 
-// Manual trigger for the SLA breach background job — the job itself runs
+// Manual trigger for the SLA breach background job - the job itself runs
 // on a 1-minute cron in production (see jobs/slaBreachJob.ts), but nobody
 // demoing this should have to sit and wait for the clock; this runs the
 // EXACT same function the cron calls, on demand.

@@ -25,7 +25,17 @@ import { AppError } from "../utils/AppError";
 
 export type PaypalMode = "sandbox" | "simulated";
 
+// Test seam (see the APIMatic plugin's typescript-testing skill): tests
+// inject an SDK Client whose transport is a stub adapter, and force sandbox
+// mode, so the real-PayPal code path is exercised with no network.
+let testOverride: { client: Client | null; mode: PaypalMode | null } = { client: null, mode: null };
+export function __setPaypalTestOverride(o: { client?: Client | null; mode?: PaypalMode | null }) {
+  testOverride = { client: o.client ?? null, mode: o.mode ?? null };
+  cachedToken = null;
+}
+
 export function paypalMode(): PaypalMode {
+  if (testOverride.mode) return testOverride.mode;
   return env.PAYPAL_CLIENT_ID && env.PAYPAL_CLIENT_SECRET ? "sandbox" : "simulated";
 }
 
@@ -59,6 +69,7 @@ const money = (n: number) => n.toFixed(2);
 let sdkClient: Client | null = null;
 
 function sdk(): Client {
+  if (testOverride.client) return testOverride.client;
   if (!sdkClient) {
     sdkClient = new Client({
       clientCredentialsAuthCredentials: {
@@ -67,10 +78,21 @@ function sdk(): Client {
         oAuthClockSkew: 60, // refresh the token a minute before it expires
       },
       environment: env.PAYPAL_API_BASE.includes("sandbox") ? Environment.Sandbox : Environment.Production,
-      // SDK defaults are "no timeout, no retries". Retries stay on GET/PUT
-      // only (the SDK default); POSTs are protected by PayPal-Request-Id.
+      // SDK defaults are "no timeout, no retries" (timeout 0 = unlimited).
+      // Per the APIMatic plugin's resilience skill, retries only happen when
+      // the backoff fits inside maximumRetryWaitTime, whose generated default
+      // is 0, so it must be set alongside maxNumberOfRetries. POST is safe to
+      // retry here because every POST we send carries a PayPal-Request-Id.
       timeout: 30000,
-      httpClientOptions: { timeout: 30000, retryConfig: { maxNumberOfRetries: 2, backoffFactor: 2 } },
+      httpClientOptions: {
+        timeout: 15000,
+        retryConfig: {
+          maxNumberOfRetries: 2,
+          maximumRetryWaitTime: 10,
+          backoffFactor: 2,
+          httpMethodsToRetry: ["GET", "PUT", "POST"],
+        },
+      },
     });
   }
   return sdkClient;

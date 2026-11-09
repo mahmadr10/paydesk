@@ -7,7 +7,7 @@ import { logAction } from "../services/auditLogService";
 import { logger } from "../observability/logger";
 import { env } from "../config/env";
 
-// Background job — the spec's "Background Jobs" bonus item. Runs every
+// Background job - the spec's "Background Jobs" bonus item. Runs every
 // minute, finds tickets that JUST crossed an SLA deadline while still
 // active (not resolved/closed) and haven't been notified about yet, and
 // pushes a persisted Notification + a live Socket.IO event to whoever
@@ -15,7 +15,7 @@ import { env } from "../config/env";
 //
 // Why a `*Notified` flag per ticket instead of re-deriving "is this
 // breached" fresh every run: computeSlaStatus() (used for the LIVE display
-// on a ticket) is intentionally stateless — "breached: true/false" recomputed
+// on a ticket) is intentionally stateless - "breached: true/false" recomputed
 // on every read. A notification is different: it must fire EXACTLY ONCE per
 // breach, or a still-overdue ticket would re-notify its agent every single
 // minute forever. The flag is the only way to distinguish "still breached,
@@ -37,17 +37,17 @@ export async function checkSlaBreaches(): Promise<{ responseBreaches: number; re
     status: { $in: ACTIVE_STATUSES },
     firstResponseAt: null,
     responseDeadline: { $lt: now },
-    // `$ne: true`, not `{ responseBreachNotified: false }` — a real bug
+    // `$ne: true`, not `{ responseBreachNotified: false }` - a real bug
     // found running this against real seeded data: MongoDB's `{ field:
     // false }` filter does NOT match documents where the field is simply
     // ABSENT (e.g. tickets created before this field existed in the
-    // schema) — only ones where it's explicitly stored as `false`. `$ne:
+    // schema) - only ones where it's explicitly stored as `false`. `$ne:
     // true` matches both "explicitly false" and "missing," which is the
     // correct meaning of "not yet notified" for legacy documents too.
     responseBreachNotified: { $ne: true },
   });
   for (const ticket of responseBreaches) {
-    const message = `Response SLA breached: ${ticket.ticketNumber} — "${ticket.title}"`;
+    const message = `Response SLA breached: ${ticket.ticketNumber} - "${ticket.title}"`;
     await notifyRecipients(ticket, message);
     await logAction({ actor: null, action: "SLA_BREACH_DETECTED", entity: "Ticket", entityId: ticket._id.toString(), metadata: { type: "response" } });
     ticket.responseBreachNotified = true;
@@ -60,7 +60,7 @@ export async function checkSlaBreaches(): Promise<{ responseBreaches: number; re
     resolutionBreachNotified: { $ne: true },
   });
   for (const ticket of resolutionBreaches) {
-    const message = `Resolution SLA breached: ${ticket.ticketNumber} — "${ticket.title}"`;
+    const message = `Resolution SLA breached: ${ticket.ticketNumber} - "${ticket.title}"`;
     await notifyRecipients(ticket, message);
     await logAction({ actor: null, action: "SLA_BREACH_DETECTED", entity: "Ticket", entityId: ticket._id.toString(), metadata: { type: "resolution" } });
     ticket.resolutionBreachNotified = true;

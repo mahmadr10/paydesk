@@ -30,7 +30,7 @@ export function useMarkAllNotificationsRead() {
   });
 }
 
-// Mounted once near the root (same pattern as useSocketSync) — a live
+// Mounted once near the root (same pattern as useSocketSync) - a live
 // "notification:new" event means a NEW row exists server-side that no
 // query has seen yet, so just invalidate rather than trying to splice the
 // payload into the cache by hand.

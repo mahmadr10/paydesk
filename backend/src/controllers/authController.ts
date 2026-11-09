@@ -8,7 +8,7 @@ import { env, isProduction } from "../config/env";
 // calls can never accidentally disagree on path/sameSite/secure and leave a
 // cookie the browser won't actually delete.
 const REFRESH_COOKIE_OPTIONS = {
-  httpOnly: true, // frontend JS can never read this — the whole point of using a cookie instead of localStorage for it
+  httpOnly: true, // frontend JS can never read this - the whole point of using a cookie instead of localStorage for it
   secure: isProduction, // only sent over HTTPS in production; localhost dev has no TLS
   sameSite: "lax" as const,
   path: "/api/v1/auth", // only sent back to auth endpoints, not every API call

@@ -11,7 +11,7 @@ import { requestLogger } from "./observability/requestLogger";
 export function createApp() {
   const app = express();
 
-  // Logging goes FIRST, before anything else touches the request — that
+  // Logging goes FIRST, before anything else touches the request - that
   // way it wraps the entire lifecycle (including time spent in helmet,
   // CORS, rate limiting) and reports the true end-to-end duration.
   app.use(requestLogger);

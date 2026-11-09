@@ -1,9 +1,9 @@
-# Render Blueprint — lets Render auto-configure the backend service from
+# Render Blueprint - lets Render auto-configure the backend service from
 # this file instead of manual dashboard clicking: New + -> Blueprint ->
 # connect this repo -> Render reads this, prompts only for the `sync: false`
 # secrets below, and deploys. See DEPLOYMENT.md for the full walkthrough.
 #
-# Builds directly from backend/Dockerfile — the same multi-stage image used
+# Builds directly from backend/Dockerfile - the same multi-stage image used
 # locally via docker-compose.yml, so "works in Docker locally" and "works on
 # Render" are the same artifact, not two different build paths to keep in sync.
 services:
@@ -17,15 +17,15 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # Render injects PORT automatically — the app already reads
+      # Render injects PORT automatically - the app already reads
       # process.env.PORT (config/env.ts), so this is deliberately NOT set
       # here; hardcoding it would fight Render's own port assignment.
       - key: MONGODB_URI
         sync: false # paste your Atlas connection string in the Render dashboard
       - key: JWT_ACCESS_SECRET
-        sync: false # a long random string — generate your own, never reuse the local dev one
+        sync: false # a long random string - generate your own, never reuse the local dev one
       - key: FRONTEND_ORIGIN
-        sync: false # the deployed Vercel URL — set once you have it (see DEPLOYMENT.md's chicken-and-egg note)
+        sync: false # the deployed Vercel URL - set once you have it (see DEPLOYMENT.md's chicken-and-egg note)
       - key: LOG_LEVEL
         value: info
       - key: JOBS_ENABLED
@@ -33,7 +33,7 @@ services:
       - key: AI_ENABLED
         value: "true"
       - key: GROQ_API_KEY
-        sync: false # optional — omit entirely to run the AI features' mock fallback in production
+        sync: false # optional - omit entirely to run the AI features' mock fallback in production
       - key: PAYPAL_CLIENT_ID
         sync: false # sandbox app client id (developer.paypal.com)
       - key: PAYPAL_CLIENT_SECRET

@@ -87,7 +87,7 @@ router.post(
   ticketController.assignToSelf
 );
 
-// AI ticket assistant (spec's optional bonus feature) — staff-only, since
+// AI ticket assistant (spec's optional bonus feature) - staff-only, since
 // the output (a suggested internal priority, a draft reply) is triage
 // tooling, not something a customer should see. See services/aiService.ts.
 router.post(

@@ -6,7 +6,7 @@ import { logger } from "../observability/logger";
 const DEFAULT_CATEGORIES = ["Technical", "Billing", "Account", "Payment", "Other"];
 
 // Ticket creation requires a category to exist and an SLA policy for its
-// priority to exist — so an empty database can't create a ticket at all.
+// priority to exist - so an empty database can't create a ticket at all.
 // Rather than make that a manual setup step, we seed sensible defaults
 // automatically on every startup. It's idempotent (checks "does anything
 // exist" first) so restarting the server never duplicates or resets data

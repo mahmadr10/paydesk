@@ -9,7 +9,7 @@ import { AppError } from "../utils/AppError";
 // our business logic or database.
 //
 // Why validate on the server when the frontend form already validates?
-// Because the frontend can be bypassed entirely — anyone can call the API
+// Because the frontend can be bypassed entirely - anyone can call the API
 // directly with curl/Postman, skipping the browser form. Server-side
 // validation is the real gate; frontend validation is just a nicer UX.
 type RequestPart = "body" | "params" | "query";
@@ -25,7 +25,7 @@ export function validate(schema: ZodType, part: RequestPart = "body") {
       throw new AppError(400, "VALIDATION_ERROR", message);
     }
 
-    // Express 5 made `req.query` a getter-only property (no setter) — you
+    // Express 5 made `req.query` a getter-only property (no setter) - you
     // can no longer do `req.query = newObject`, it throws. `req.body` and
     // `req.params` are still plain writable properties, so only `query`
     // needs the "clear and refill the existing object" workaround; for the

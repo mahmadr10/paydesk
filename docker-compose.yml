@@ -1,5 +1,5 @@
 services:
-  # A LOCAL MongoDB, so `docker compose up` works standalone — no Atlas
+  # A LOCAL MongoDB, so `docker compose up` works standalone - no Atlas
   # account needed just to try the project out. (Point the backend at a
   # real Atlas URI instead by overriding MONGODB_URI in a root .env file
   # if you'd rather use that.)
@@ -15,7 +15,7 @@ services:
 
   # All-in-one Jaeger: trace storage + UI + an OTLP/HTTP receiver, one image.
   # Real production setups run a separate collector/storage backend; this is
-  # the right-sized choice for a project this size — genuinely useless to run
+  # the right-sized choice for a project this size - genuinely useless to run
   # a multi-container Jaeger deployment just to view traces from one backend
   # service.
   jaeger:
@@ -23,7 +23,7 @@ services:
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
     ports:
-      - "16686:16686" # Jaeger UI — http://localhost:16686
+      - "16686:16686" # Jaeger UI - http://localhost:16686
       - "4318:4318" # OTLP/HTTP receiver (backend's traces land here)
 
   backend:
@@ -40,19 +40,19 @@ services:
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-insecure-dev-only-secret-change-me}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:8080}
       LOG_LEVEL: info
-      # Points at the Jaeger service above by its Docker network name — this
+      # Points at the Jaeger service above by its Docker network name - this
       # is what makes `docker compose up` produce real traces (viewable at
       # http://localhost:16686) with zero manual configuration.
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
-      # Unset by default (empty string) — the AI Assist feature runs its
+      # Unset by default (empty string) - the AI Assist feature runs its
       # mock fallback until you export GROQ_API_KEY in your shell before
       # `docker compose up`, or set it in a root .env file (see .env.example).
       GROQ_API_KEY: ${GROQ_API_KEY:-}
     ports:
       - "4000:4000"
-      - "9464:9464" # Prometheus metrics — http://localhost:9464/metrics
+      - "9464:9464" # Prometheus metrics - http://localhost:9464/metrics
     volumes:
-      # Uploaded attachments survive `docker compose down` / rebuilds —
+      # Uploaded attachments survive `docker compose down` / rebuilds -
       # without this volume they'd live only in the container's writable
       # layer and vanish the moment the container is recreated.
       - backend_uploads:/app/uploads
@@ -66,7 +66,7 @@ services:
     build:
       context: ./frontend
       args:
-        # Baked in at BUILD time (see frontend/Dockerfile) — this must be a
+        # Baked in at BUILD time (see frontend/Dockerfile) - this must be a
         # URL the USER'S BROWSER can reach, i.e. the published host port,
         # not the internal Docker network name "backend".
         VITE_API_URL: ${VITE_API_URL:-http://localhost:4000/api/v1}

@@ -9,7 +9,7 @@ import { Schema, model, Document } from "mongoose";
 //
 // Its _id is a plain string (the counter's name, e.g. "ticket") instead of
 // the usual ObjectId, so this interface deliberately does NOT extend
-// Document<ObjectId> — that would conflict on the _id type.
+// Document<ObjectId> - that would conflict on the _id type.
 export interface ICounter extends Document<string> {
   _id: string;
   seq: number;

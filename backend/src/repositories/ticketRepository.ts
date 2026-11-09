@@ -28,7 +28,7 @@ export function buildTicketQuery(filter: TicketFilter): Record<string, unknown> 
     // $text would need a text index; for a demo-scale dataset a case
     // insensitive regex on title is simple and index-assisted enough. A
     // dedicated search engine (Atlas Search/Elasticsearch) would replace
-    // this at real scale — noted in ARCHITECTURE.md as a scaling concern.
+    // this at real scale - noted in ARCHITECTURE.md as a scaling concern.
     query.title = { $regex: filter.search, $options: "i" };
   }
   return query;
@@ -62,7 +62,7 @@ export function findTicketById(id: string) {
     .populate("refundProposal.decidedBy", "name");
 }
 
-// Internal variant that skips populate — used when a service needs to
+// Internal variant that skips populate - used when a service needs to
 // mutate and re-save the document (populated subdocuments can't be saved).
 export function findTicketDocById(id: string) {
   return Ticket.findById(id);

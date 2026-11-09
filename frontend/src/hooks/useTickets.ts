@@ -4,7 +4,7 @@ import type { ListTicketsParams } from "../api/tickets";
 import type { TicketStatus, TicketPriority } from "../types";
 
 export function useTicketList(params: ListTicketsParams) {
-  // The query key includes every param that affects the result — TanStack
+  // The query key includes every param that affects the result - TanStack
   // Query treats a different key as a DIFFERENT cache entry, which is
   // exactly what we want: switching the status filter shouldn't show stale
   // results from the previous filter while the new page loads.

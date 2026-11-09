@@ -5,7 +5,7 @@ import { logger } from "../observability/logger";
 // Mongoose is a library that sits on top of the raw MongoDB driver and lets
 // us define "schemas" (shapes for our documents, e.g. a User always has an
 // email string and a role) plus get TypeScript types for them. Raw MongoDB
-// has no schema at all — anything can be saved. For a team project with
+// has no schema at all - anything can be saved. For a team project with
 // TypeScript, Mongoose's structure + validation is worth the small overhead.
 // MONGODB_URI=memory starts a throwaway in-memory MongoDB, so anyone (a
 // judge included) can run the app with zero database setup. Data is lost

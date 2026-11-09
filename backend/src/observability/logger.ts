@@ -4,7 +4,7 @@ import { pushLogEntry } from "./logBuffer";
 
 // One shared, structured logger for the whole backend. "Structured" means
 // every log line is a JSON object with consistent fields (timestamp,
-// level, message, plus whatever context we attach) — not free-form text.
+// level, message, plus whatever context we attach) - not free-form text.
 // That's what makes logs actually SEARCHABLE in a real deployment (e.g.
 // "show me every error for userId X in the last hour") instead of just
 // scrollback you read with your eyes.
@@ -21,7 +21,7 @@ export const logger = pino({
     paths: ["req.headers.authorization", "req.headers.cookie", "*.password", "*.passwordHash", "*.token"],
     censor: "[Redacted]",
   },
-  // Mirrors every log call into the in-memory ring buffer (logBuffer.ts) —
+  // Mirrors every log call into the in-memory ring buffer (logBuffer.ts) -
   // runs BEFORE serialization/output, so it works the same whether we're
   // pretty-printing to the console (dev) or emitting raw JSON (prod), and
   // regardless of `transport` config. try/catch because a bug in the buffer

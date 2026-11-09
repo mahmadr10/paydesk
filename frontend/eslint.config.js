@@ -21,7 +21,7 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       // Catches components exported alongside non-component values, which
       // breaks Vite's Fast Refresh (the "edit and see it update instantly"
-      // dev experience) — a real bug class, not just a style nitpick.
+      // dev experience) - a real bug class, not just a style nitpick.
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },

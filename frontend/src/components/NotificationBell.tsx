@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications, useUnreadCount } from "../hooks/useNotifications";
 
 // Every notification today comes from the SLA breach background job
-// (jobs/slaBreachJob.ts) — the shape is generic (Notification model isn't
+// (jobs/slaBreachJob.ts) - the shape is generic (Notification model isn't
 // SLA-specific), this component just renders whatever's there.
 export function NotificationBell() {
   const [open, setOpen] = useState(false);

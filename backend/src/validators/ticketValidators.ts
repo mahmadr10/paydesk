@@ -14,7 +14,7 @@ export const createTicketSchema = z.object({
 });
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 
-// Everything the ticket queue/list needs: filter, search, sort, paginate —
+// Everything the ticket queue/list needs: filter, search, sort, paginate -
 // all handled server-side (see repositories/ticketRepository.ts) so the
 // browser never downloads more than one page of results.
 export const listTicketsQuerySchema = z.object({
@@ -48,7 +48,7 @@ export const updateTagsSchema = z.object({
   tags: z.array(z.string().trim().min(1)).max(10),
 });
 
-// Admin/agent reassignment — assign a SPECIFIC agent, as opposed to
+// Admin/agent reassignment - assign a SPECIFIC agent, as opposed to
 // POST /tickets/:id/assign which always means "assign to myself".
 export const reassignSchema = z.object({
   agentId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid agent id"),

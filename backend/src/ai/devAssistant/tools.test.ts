@@ -5,7 +5,7 @@ import { extractSearchKeywords } from "./tools";
 // BUILD_LOG.md): the first version reduced a whole question down to ONE
 // combined phrase and searched for it as a literal substring, so a genuinely
 // answerable question ("where is authentication implemented") came back
-// empty every time — nothing in the code says "authentication implemented"
+// empty every time - nothing in the code says "authentication implemented"
 // verbatim. Fixed by returning multiple OR-able keywords, expanded through a
 // small synonym table for this codebase's actual vocabulary.
 describe("extractSearchKeywords", () => {
@@ -13,7 +13,7 @@ describe("extractSearchKeywords", () => {
     const keywords = extractSearchKeywords("Where is authentication implemented in this codebase?");
     expect(keywords).toContain("authentication");
     // The bug: previously this would have been ONE joined string like
-    // "where authentication implemented this" — never multiple standalone terms.
+    // "where authentication implemented this" - never multiple standalone terms.
     expect(keywords.every((k) => !k.includes(" "))).toBe(true);
   });
 

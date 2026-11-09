@@ -20,7 +20,7 @@ const userSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ["CUSTOMER", "AGENT", "ADMIN"], required: true },
     // Lets an admin deactivate an account (e.g. an agent who left) without
-    // deleting their history — deactivated users can't log in, but their
+    // deleting their history - deactivated users can't log in, but their
     // name still shows correctly on old tickets/comments/audit entries.
     isActive: { type: Boolean, default: true },
   },

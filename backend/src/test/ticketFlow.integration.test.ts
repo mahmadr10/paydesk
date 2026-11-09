@@ -6,7 +6,7 @@ import { connectDB } from "../config/db";
 import { seedDefaults } from "../config/seed";
 
 // Integration tests exercise the REAL HTTP layer (Supertest drives the
-// actual Express app — routes, middleware, validation, controllers,
+// actual Express app - routes, middleware, validation, controllers,
 // services, and a real MongoDB, all wired together) rather than calling
 // service functions directly. This is what catches bugs unit tests can't:
 // wrong route paths, a validator that doesn't match its controller, a role
@@ -137,7 +137,7 @@ describe("Tickets: creation, retrieval, assignment, status transitions", () => {
     expect(res.body.data.ticket.allowedNextStatuses).toEqual([]);
   });
 
-  it("blocks a customer from creating a ticket as another customer's — a customer cannot see others' tickets", async () => {
+  it("blocks a customer from creating a ticket as another customer's - a customer cannot see others' tickets", async () => {
     const a = await registerAndLogin("CUSTOMER", "custA");
     const b = await registerAndLogin("CUSTOMER", "custB");
 
@@ -170,7 +170,7 @@ describe("Tickets: creation, retrieval, assignment, status transitions", () => {
     expect(skipAttempt.status).toBe(400);
     expect(skipAttempt.body.error.code).toBe("INVALID_STATUS_TRANSITION");
 
-    // A customer cannot triage — staff-only action.
+    // A customer cannot triage - staff-only action.
     const customerTriesToTriage = await request(app)
       .patch(`/api/v1/tickets/${ticketId}/status`)
       .set("Authorization", `Bearer ${customer.token}`)
@@ -223,7 +223,7 @@ describe("Tickets: creation, retrieval, assignment, status transitions", () => {
     expect(res.status).toBe(403);
   });
 
-  it("lets an agent run AI analysis on a ticket (mock fallback — no GROQ_API_KEY in test env)", async () => {
+  it("lets an agent run AI analysis on a ticket (mock fallback - no GROQ_API_KEY in test env)", async () => {
     const customer = await registerAndLogin("CUSTOMER", "aicust");
     const agent = await registerAndLogin("AGENT", "aiagent");
     const created = await request(app)
@@ -235,7 +235,7 @@ describe("Tickets: creation, retrieval, assignment, status transitions", () => {
     const res = await request(app).post(`/api/v1/tickets/${ticketId}/ai-analyze`).set("Authorization", `Bearer ${agent.token}`);
     expect(res.status).toBe(200);
     expect(res.body.data.analysis.source).toBe("mock"); // no GROQ_API_KEY is set in the test environment, by design
-    expect(res.body.data.analysis.suggestedPriority).toBe("CRITICAL"); // "returns 500" / "down" — the mock's own keyword rules
+    expect(res.body.data.analysis.suggestedPriority).toBe("CRITICAL"); // "returns 500" / "down" - the mock's own keyword rules
     expect(typeof res.body.data.analysis.summary).toBe("string");
     expect(typeof res.body.data.analysis.suggestedResponse).toBe("string");
   });

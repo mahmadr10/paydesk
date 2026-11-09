@@ -27,7 +27,7 @@ export function TicketQueuePage() {
   });
 
   // A one-off assignment mutation not tied to a specific ticket id (unlike
-  // useAssignToSelf, which is scoped per ticket-detail page) — here we
+  // useAssignToSelf, which is scoped per ticket-detail page) - here we
   // handle it inline since the queue shows many tickets at once.
   async function handleAssign(ticketId: string) {
     setAssigningId(ticketId);

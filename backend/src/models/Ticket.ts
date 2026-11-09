@@ -1,7 +1,7 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 // The full status graph now BRANCHES (IN_PROGRESS can go two different
-// places), so it's no longer "one next status" — see
+// places), so it's no longer "one next status" - see
 // services/ticketService.ts TRANSITIONS map for the actual rules. This list
 // is just every status that exists.
 export const TICKET_STATUSES = [
@@ -53,7 +53,7 @@ export interface ITicket extends Document {
   assignedAgent: Types.ObjectId | null;
   attachments: ITicketAttachment[];
 
-  // SLA fields — set once, from the SLA policy in effect at creation time
+  // SLA fields - set once, from the SLA policy in effect at creation time
   // (see slaService.ts). Storing the actual deadline (not just "15 minutes")
   // means we can index and query "which tickets are overdue RIGHT NOW"
   // efficiently, and it's immune to a later policy change silently
@@ -64,7 +64,7 @@ export interface ITicket extends Document {
   resolvedAt: Date | null;
 
   // Set by jobs/slaBreachJob.ts the first (and only) time each deadline is
-  // found breached — without these, a job re-scanning every minute would
+  // found breached - without these, a job re-scanning every minute would
   // re-notify the same still-overdue ticket every single run forever.
   responseBreachNotified: boolean;
   resolutionBreachNotified: boolean;
@@ -249,7 +249,7 @@ ticketSchema.index({ "dispute.disputeId": 1 }, { unique: true, partialFilterExpr
 // Compound indexes for the query patterns the ticket queue/dashboard
 // actually run: "an agent's queue filtered by status, newest first" and
 // "a customer's tickets filtered by status, newest first" are both covered
-// by a (field, status, createdAt) index — MongoDB can satisfy the filter AND
+// by a (field, status, createdAt) index - MongoDB can satisfy the filter AND
 // the sort from the index alone, without a separate in-memory sort step.
 ticketSchema.index({ assignedAgent: 1, status: 1, createdAt: -1 });
 ticketSchema.index({ customer: 1, status: 1, createdAt: -1 });

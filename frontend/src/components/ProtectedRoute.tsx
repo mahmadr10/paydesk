@@ -5,7 +5,7 @@ import type { UserRole } from "../types";
 
 // Wraps a page and only renders it if the user is logged in (and, if
 // `roles` is given, has one of the allowed roles). This is a UX
-// convenience only — it stops a customer from even SEEING the agent
+// convenience only - it stops a customer from even SEEING the agent
 // queue page, but it is NOT the real security boundary. The real
 // boundary is requireAuth/requireRole on the backend, which checks
 // every request regardless of what the frontend shows or hides.

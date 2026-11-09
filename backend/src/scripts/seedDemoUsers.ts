@@ -1,6 +1,6 @@
 // Run manually with: npm run seed:users
 // Creates one demo account per role, ONLY if that email doesn't already
-// exist — safe to run more than once. This is a deliberate, explicit step
+// exist - safe to run more than once. This is a deliberate, explicit step
 // (not automatic on every boot, unlike config/seed.ts) because it creates
 // login credentials, and printing/creating those automatically on every
 // server start would be a bad habit even for a demo.

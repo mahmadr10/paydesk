@@ -84,7 +84,7 @@ export async function runIntake(message: string, orders: IntakeOrder[], categori
     const orderList = orders
       .map(
         (o) =>
-          `${o.orderNumber}: ${o.itemNames.join(", ")} — ${o.total} ${o.currency}, paid ${o.paidAt?.toISOString().slice(0, 10) ?? "?"}`
+          `${o.orderNumber}: ${o.itemNames.join(", ")} - ${o.total} ${o.currency}, paid ${o.paidAt?.toISOString().slice(0, 10) ?? "?"}`
       )
       .join("\n");
     const r = await model.invoke([

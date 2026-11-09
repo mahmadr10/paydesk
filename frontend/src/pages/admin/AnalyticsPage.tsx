@@ -6,7 +6,7 @@ function toChartData(record: Record<string, number> | undefined) {
   return Object.entries(record ?? {}).map(([name, count]) => ({ name: name.replace(/_/g, " "), count }));
 }
 
-// A dedicated, larger view of the same analytics the Dashboard summarizes —
+// A dedicated, larger view of the same analytics the Dashboard summarizes -
 // the Dashboard is "at a glance," this page is "drill in."
 export function AnalyticsPage() {
   const { data, isLoading, error } = useDashboardAnalytics();

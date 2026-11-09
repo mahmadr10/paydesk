@@ -71,7 +71,7 @@ export async function uploadAttachmentRequest(id: string, file: File) {
 }
 
 // A plain <a href="..."> can't carry our Authorization header, so a direct
-// link to this URL would 401 — instead we fetch the file THROUGH axios
+// link to this URL would 401 - instead we fetch the file THROUGH axios
 // (which does attach the header) as a blob, then hand the browser a
 // temporary local object URL to save it. Revoking that URL after the click
 // avoids leaking memory for large files across a long session.

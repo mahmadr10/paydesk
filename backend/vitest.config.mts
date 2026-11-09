@@ -2,10 +2,10 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   // Vitest (via Vite) auto-loads a ".env" file and injects it into
-  // process.env before tests run — great for a real app, but it means a
+  // process.env before tests run - great for a real app, but it means a
   // developer's real backend/.env (with a real Mongo URI, real secrets)
   // would leak into test runs and fight with the in-memory test database
-  // globalSetup configures below. Tests should be hermetic — their
+  // globalSetup configures below. Tests should be hermetic - their
   // environment should come from globalSetup ONLY, never from whatever
   // happens to be sitting in a developer's local .env.
   envDir: false,

@@ -2,7 +2,7 @@ import { Schema, model, Document, Types } from "mongoose";
 
 // The audit log is what makes this a "production system" rather than a toy:
 // a permanent, append-only record of who did what to which record, and what
-// changed. Nothing ever updates or deletes an AuditLog entry — services only
+// changed. Nothing ever updates or deletes an AuditLog entry - services only
 // ever create new ones. That immutability is the whole point: it's a trail,
 // not a cache.
 export interface IAuditLog extends Document {

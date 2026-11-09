@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // On first load there's no access token in memory yet (a page refresh
-  // wipes it — see api/client.ts) — but if the httpOnly refresh cookie is
+  // wipes it - see api/client.ts) - but if the httpOnly refresh cookie is
   // still valid, this silently exchanges it for a new one, restoring the
   // session with no password re-entry and no token ever touching
   // localStorage.
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         connectSocketIfPossible();
       })
       .catch(() => {
-        // No valid refresh cookie (never logged in, or it expired) — a
+        // No valid refresh cookie (never logged in, or it expired) - a
         // normal, expected outcome, not an error to surface.
       })
       .finally(() => setLoading(false));

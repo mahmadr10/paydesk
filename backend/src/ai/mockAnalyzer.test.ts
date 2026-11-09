@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { mockAnalyzeTicket } from "./mockAnalyzer";
 
 // The mock analyzer is what CI, and anyone running this project with no
-// GROQ_API_KEY, actually exercises — it's the load-bearing "the app must
+// GROQ_API_KEY, actually exercises - it's the load-bearing "the app must
 // still run without the API key" path, not just a stub, so it gets real
 // test coverage of its own.
 describe("mockAnalyzeTicket", () => {

@@ -7,7 +7,7 @@ import { AppError } from "../utils/AppError";
 export const UPLOAD_DIR = path.join(__dirname, "..", "..", "uploads");
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-// Whitelist, not blacklist — we only accept file types we can vouch for.
+// Whitelist, not blacklist - we only accept file types we can vouch for.
 // This is the main defense against someone uploading something dangerous
 // (e.g. an executable, or an HTML file that could be served back and run
 // script in another user's browser).
@@ -27,7 +27,7 @@ const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
   filename: (_req, file, cb) => {
-    // Never trust the client's filename for the ON-DISK name — it could
+    // Never trust the client's filename for the ON-DISK name - it could
     // contain path-traversal characters ("../../etc") or collide with an
     // existing file. We generate a random name and keep the client's
     // original name only as metadata for display/download.

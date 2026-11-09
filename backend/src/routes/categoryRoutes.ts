@@ -5,7 +5,7 @@ import { listActiveCategories } from "../repositories/categoryRepository";
 const router = Router();
 
 // Any logged-in user (customer included) needs to see the list of active
-// categories to fill out the "Create Ticket" form — distinct from
+// categories to fill out the "Create Ticket" form - distinct from
 // /admin/categories, which is the admin-only management endpoint (create,
 // deactivate). This one is read-only and deliberately has no role
 // restriction beyond "must be logged in."

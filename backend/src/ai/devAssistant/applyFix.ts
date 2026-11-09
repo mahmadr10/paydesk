@@ -1,14 +1,14 @@
-// The ONLY place in this entire feature that writes to a source file — and
+// The ONLY place in this entire feature that writes to a source file - and
 // even here, only when a human has explicitly reviewed a diff and clicked
 // "Apply" (see controllers/adminController.ts / the frontend's Suggested
 // Fix panel). Everything below exists to make that one write as safe as a
 // deliberately-triggered, reviewable, auto-verified write CAN be:
-//   1. Path validation — can only target real .ts/.tsx application source
+//   1. Path validation - can only target real .ts/.tsx application source
 //      under backend/src or frontend/src, never this tool's own code,
 //      never .env/config/package.json/node_modules.
-//   2. Exact-match validation — `oldCode` must appear in the CURRENT file
+//   2. Exact-match validation - `oldCode` must appear in the CURRENT file
 //      content EXACTLY ONCE. Zero matches (file changed, hallucinated
-//      snippet) or multiple matches (ambiguous — which one?) both reject
+//      snippet) or multiple matches (ambiguous - which one?) both reject
 //      outright rather than guess.
 //   3. Apply, then IMMEDIATELY run the real test suite. Tests fail →
 //      automatic revert to the original content, nothing durable happens.
@@ -23,7 +23,7 @@ const ALLOWED_ROOTS = ["backend/src", "frontend/src"].map((d) => path.join(REPO_
 const ALLOWED_EXTENSIONS = new Set([".ts", ".tsx"]);
 
 function resolveAndValidateTarget(targetFile: string): string {
-  // path.resolve collapses ".."/"." segments — this is what makes the
+  // path.resolve collapses ".."/"." segments - this is what makes the
   // "starts with an allowed root" check below actually meaningful instead
   // of trivially bypassable with "../../../etc/whatever".
   const resolved = path.resolve(REPO_ROOT, targetFile);
@@ -69,21 +69,21 @@ export async function applyFix(input: ApplyFixInput): Promise<ApplyFixResult> {
     throw new AppError(
       400,
       "FIX_NOT_APPLICABLE",
-      "The suggested old code no longer matches the current file content exactly — the file may have changed, or the suggestion wasn't precise. Re-run the investigation."
+      "The suggested old code no longer matches the current file content exactly - the file may have changed, or the suggestion wasn't precise. Re-run the investigation."
     );
   }
   if (occurrences > 1) {
     throw new AppError(
       400,
       "FIX_AMBIGUOUS",
-      `The suggested old code appears ${occurrences} times in the file — refusing to guess which one. A more specific snippet is needed.`
+      `The suggested old code appears ${occurrences} times in the file - refusing to guess which one. A more specific snippet is needed.`
     );
   }
-  // Refuses to replace almost-the-whole-file — a real, minimal fix touches
+  // Refuses to replace almost-the-whole-file - a real, minimal fix touches
   // a small, identifiable region; anything else is more likely a runaway
   // generation than a considered patch.
   if (input.oldCode.length > originalContent.length * 0.8) {
-    throw new AppError(400, "FIX_TOO_BROAD", "The suggested change covers most of the file — refusing to apply something this broad automatically.");
+    throw new AppError(400, "FIX_TOO_BROAD", "The suggested change covers most of the file - refusing to apply something this broad automatically.");
   }
 
   const newContent = originalContent.replace(input.oldCode, input.newCode);
@@ -94,7 +94,7 @@ export async function applyFix(input: ApplyFixInput): Promise<ApplyFixResult> {
 
   if (!passed) {
     // The auto-rollback: applying a plausible-looking fix that turns out to
-    // break something is not a "well, we tried" outcome — the whole point
+    // break something is not a "well, we tried" outcome - the whole point
     // of running tests immediately after applying is to make that
     // recoverable automatically, not left for a human to notice later.
     await fs.writeFile(resolvedPath, originalContent, "utf-8");

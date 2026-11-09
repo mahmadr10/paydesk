@@ -10,7 +10,7 @@ import { searchRepo, getRecentGitLog, searchRecentLogs, runTestSuite, extractSea
 const REPO_ROOT = path.join(__dirname, "..", "..", "..", "..");
 
 // The multi-agent shape: an orchestrator PLANS which specialist agents are
-// actually relevant to the question (not a fixed pipeline every time —
+// actually relevant to the question (not a fixed pipeline every time -
 // asking "why is the SLA math wrong" has no business spinning up a full
 // test run), those agents gather evidence in PARALLEL, and a diagnosis
 // step synthesizes everything into one answer:
@@ -21,7 +21,7 @@ const REPO_ROOT = path.join(__dirname, "..", "..", "..", "..");
 //        └─→ testAgent  (runs the real suite)   ─┘
 //         (only the agents `plan` actually selected run at all)
 //
-// Every tool call here is READ-ONLY (see tools.ts) — this graph can
+// Every tool call here is READ-ONLY (see tools.ts) - this graph can
 // investigate and recommend, never apply a fix itself. See
 // ARCHITECTURE.md's AI Dev Assistant section for the full reasoning.
 
@@ -44,14 +44,14 @@ const State = Annotation.Root({
   selectedAgents: Annotation<AgentName[]>(),
   findings: Annotation<Record<string, string>>({
     // Multiple agent nodes run in parallel and each writes ITS OWN key into
-    // `findings` in the same superstep — without an explicit merge reducer,
+    // `findings` in the same superstep - without an explicit merge reducer,
     // LangGraph's default "last write wins" semantics would let one agent's
     // result silently clobber another's. This merges them all.
     reducer: (left, right) => ({ ...left, ...right }),
     default: () => ({}),
   }),
   diagnosis: Annotation<string>(),
-  // No `default` needed — `suggestFix` unconditionally runs after
+  // No `default` needed - `suggestFix` unconditionally runs after
   // `diagnosisAgent` on every invocation, so this is always populated by
   // the time `.invoke()` resolves.
   suggestedFix: Annotation<SuggestedFix>(),
@@ -84,18 +84,18 @@ async function planNode(state: S, config: RunnableConfig): Promise<Partial<S>> {
       content:
         "You orchestrate 4 read-only investigation agents for a support-ticket platform's codebase: " +
         "'repo' (searches TypeScript source for relevant code), 'git' (recent commit history), " +
-        "'log' (recent structured application logs), 'test' (runs the real automated test suite — " +
+        "'log' (recent structured application logs), 'test' (runs the real automated test suite - " +
         "slower, only include it if the question is actually about a bug/regression/broken behavior, " +
         "not a general architecture question). Pick the smallest useful set, not all four by default.",
     },
     { role: "user", content: state.question },
   ]);
-  onStep("orchestrator", "done", `Selected: ${result.agents.join(", ")} — ${result.reasoning}`);
+  onStep("orchestrator", "done", `Selected: ${result.agents.join(", ")} - ${result.reasoning}`);
   return { selectedAgents: result.agents };
 }
 
 // Fan-out: LangGraph runs every node name returned here as a PARALLEL
-// branch in the same superstep — only the agents `plan` actually chose,
+// branch in the same superstep - only the agents `plan` actually chose,
 // nothing else. `diagnosis` only waits on whichever of these branches were
 // actually triggered this run, not on the full static set of possible ones.
 function routeToAgents(state: S): AgentName[] {
@@ -132,7 +132,7 @@ async function diagnosisNode(state: S, config: RunnableConfig): Promise<Partial<
         "You are a senior engineer diagnosing an issue in a support-ticket platform, given evidence gathered " +
         "by read-only investigation agents. Write: 1) a likely root-cause hypothesis (or 'insufficient evidence' " +
         "if the findings don't support one), 2) a concrete recommended next step. You are NOT applying any fix " +
-        "yourself — say what a human engineer should do next. Be concise (4-6 sentences total).",
+        "yourself - say what a human engineer should do next. Be concise (4-6 sentences total).",
     },
     { role: "user", content: `Question: ${state.question}\n\n${findingsText}` },
   ]);
@@ -152,13 +152,13 @@ const suggestFixSchema = z.object({
   explanation: z.string().describe("One or two sentences: what this changes and why it addresses the diagnosis."),
 });
 
-// Extracts the file the fix suggestion should target — from the repo
+// Extracts the file the fix suggestion should target - from the repo
 // agent's findings (lines shaped "path:line: content", already sorted by
 // relevance by tools.ts's searchRepo), simply whichever file the FIRST
 // (highest-scored) line belongs to.
 //
 // Real bug this fixes, found live (see BUILD_LOG.md): the original version
-// instead picked the MOST-FREQUENTLY-APPEARING file across all findings —
+// instead picked the MOST-FREQUENTLY-APPEARING file across all findings -
 // which let a file matching one common, generic keyword five separate
 // times (five unrelated `function` declarations) outrank a file matching a
 // specific, rare identifier exactly once, even though that one match was
@@ -177,18 +177,18 @@ async function suggestFixNode(state: S, config: RunnableConfig): Promise<Partial
 
   const targetFile = mostReferencedFile(state.findings.repo);
   if (!targetFile) {
-    onStep("suggestFix", "done", "No specific file identified by the repo search — no fix suggested.");
+    onStep("suggestFix", "done", "No specific file identified by the repo search - no fix suggested.");
     return { suggestedFix: NO_FIX };
   }
 
-  // Cap what we read/send — a fix suggestion for a 2000-line file from one
+  // Cap what we read/send - a fix suggestion for a 2000-line file from one
   // grep hit isn't the point; this is for a small, localized, minimal fix.
   const fileContent = await fs
     .readFile(path.join(REPO_ROOT, targetFile), "utf-8")
     .then((c) => c.split("\n").slice(0, 400).join("\n"))
     .catch(() => null);
   if (!fileContent) {
-    onStep("suggestFix", "done", `Could not read ${targetFile} — no fix suggested.`);
+    onStep("suggestFix", "done", `Could not read ${targetFile} - no fix suggested.`);
     return { suggestedFix: NO_FIX };
   }
 
@@ -198,17 +198,17 @@ async function suggestFixNode(state: S, config: RunnableConfig): Promise<Partial
       role: "system",
       content:
         "Given a diagnosed issue and the full content of the ONE file most likely responsible, propose a minimal, " +
-        "safe fix if you're genuinely confident — otherwise set fixAvailable to false rather than guess. " +
+        "safe fix if you're genuinely confident - otherwise set fixAvailable to false rather than guess. " +
         "`oldCode` MUST be copied character-for-character from the file content below (it will be matched as an " +
-        "exact substring — if it doesn't match exactly, the fix will be rejected). Keep the change small and specific.",
+        "exact substring - if it doesn't match exactly, the fix will be rejected). Keep the change small and specific.",
     },
     { role: "user", content: `Question: ${state.question}\n\nDiagnosis: ${state.diagnosis}\n\nFile: ${targetFile}\n\n${fileContent}` },
   ]);
 
-  // Defense in depth: never trust the model's claim that oldCode matches —
+  // Defense in depth: never trust the model's claim that oldCode matches -
   // verify it actually is a substring of the REAL current file content
   // before ever presenting it as applicable. (applyFix.ts re-verifies this
-  // AGAIN independently at apply time — this check is what keeps an
+  // AGAIN independently at apply time - this check is what keeps an
   // obviously-bad suggestion from even being shown as clickable.)
   const oldCodeReallyMatches = result.fixAvailable && fileContent.includes(result.oldCode);
 
@@ -228,7 +228,7 @@ const compiledGraph = new StateGraph(State)
   .addNode("gitAgent", gitAgentNode)
   .addNode("logAgent", logAgentNode)
   .addNode("testAgent", testAgentNode)
-  // Named "diagnosisAgent", not "diagnosis" — LangGraph doesn't allow a node
+  // Named "diagnosisAgent", not "diagnosis" - LangGraph doesn't allow a node
   // name to collide with a state channel name, and `diagnosis` is already
   // the State field this node writes into.
   .addNode("diagnosisAgent", diagnosisNode)

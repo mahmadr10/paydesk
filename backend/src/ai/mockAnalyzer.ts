@@ -15,7 +15,7 @@ export interface TicketAnalysisOutput {
 
 // The mock/fallback mode the spec explicitly requires: "the application
 // [must] still run without the API key." Deterministic keyword matching, not
-// a real classifier — good enough to prove the feature's SHAPE end to end
+// a real classifier - good enough to prove the feature's SHAPE end to end
 // (UI, API contract, audit log) without ever calling a network, which is
 // also why this is what CI runs (no GROQ_API_KEY secret configured there).
 const PRIORITY_KEYWORDS: [RegExp, TicketPriority][] = [
@@ -39,14 +39,14 @@ export function mockAnalyzeTicket(input: TicketAnalysisInput): TicketAnalysisOut
     input.validCategories.find((c) => text.includes(c.toLowerCase())) ?? input.validCategories[0] ?? "Other";
 
   const summary =
-    input.description.length > 160 ? `${input.title} — ${input.description.slice(0, 160)}…` : `${input.title} — ${input.description}`;
+    input.description.length > 160 ? `${input.title} - ${input.description.slice(0, 160)}…` : `${input.title} - ${input.description}`;
 
   return {
     summary,
     suggestedCategory,
     suggestedPriority,
     suggestedResponse:
-      `Thanks for reaching out — we've logged "${input.title}" and a member of our team is looking into it. ` +
+      `Thanks for reaching out - we've logged "${input.title}" and a member of our team is looking into it. ` +
       `We'll follow up as soon as we have an update.`,
   };
 }

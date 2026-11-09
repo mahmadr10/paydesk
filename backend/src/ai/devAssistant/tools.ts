@@ -1,4 +1,4 @@
-// Every tool here is READ-ONLY, by construction — there is no write/apply/
+// Every tool here is READ-ONLY, by construction - there is no write/apply/
 // patch tool in this file, and the graph (orchestratorGraph.ts) never
 // exposes one to the LLM. That's a deliberate, structural safety boundary,
 // not just a prompt instruction an LLM could be talked out of: the Dev
@@ -18,7 +18,7 @@ const SEARCHABLE_DIRS = ["backend/src", "frontend/src"];
 const SEARCHABLE_EXTENSIONS = new Set([".ts", ".tsx"]);
 const MAX_MATCHES = 15;
 
-// Shared by both the real graph and the mock fallback — a natural-language
+// Shared by both the real graph and the mock fallback - a natural-language
 // question like "Where is authentication implemented in this codebase?"
 // isn't a search string, it's a question ABOUT one. This strips filler
 // words and keeps the handful that actually carry meaning (longest-first,
@@ -26,7 +26,7 @@ const MAX_MATCHES = 15;
 //
 // Bug this fixes (found during live verification, not assumed away): the
 // first version passed the WHOLE cleaned phrase to searchRepo as one
-// literal substring — "authentication implemented codebase" never appears
+// literal substring - "authentication implemented codebase" never appears
 // verbatim anywhere, so a real, answerable question (there absolutely IS
 // auth code in this repo) came back "no matches" every time. Search tools
 // now take a LIST of keywords and match ANY of them (OR), not one exact
@@ -38,15 +38,15 @@ const STOPWORDS = new Set([
 ]);
 
 // Real code rarely spells out the same word a question would use ("Where is
-// AUTHENTICATION implemented" — but the file is auth.ts, using "JWT",
+// AUTHENTICATION implemented" - but the file is auth.ts, using "JWT",
 // "login", "token"). A general semantic/embedding search would solve this
 // properly; that's real added complexity for a bonus feature. This is the
-// honest, bounded middle ground instead — a small synonym table for the
+// honest, bounded middle ground instead - a small synonym table for the
 // vocabulary THIS specific codebase actually uses, expanding a question's
 // keyword into terms the code is more likely to literally contain. Found
 // necessary by testing a real question ("where is authentication
 // implemented") and watching it come back empty against real code that
-// obviously does implement authentication — see BUILD_LOG.md.
+// obviously does implement authentication - see BUILD_LOG.md.
 const SYNONYMS: Record<string, string[]> = {
   authentication: ["auth", "login", "jwt", "token"],
   authorization: ["auth", "role", "permission", "requirerole"],
@@ -72,14 +72,14 @@ export function extractSearchKeywords(question: string, max = 4): string[] {
 }
 
 // --- Repo search: plain-text/regex search across our own source, without
-// depending on `grep`/`ripgrep` being installed — this walks the tree in
+// depending on `grep`/`ripgrep` being installed - this walks the tree in
 // pure Node so it works identically on every OS and inside a minimal
 // Docker image with no shell utilities at all. ---
 // Real bug this scoring fixes, found in live testing (see BUILD_LOG.md):
 // the original version stopped at the first MAX_MATCHES lines found,
 // walking directories in filesystem order. A question mentioning a
 // specific function name ALSO naturally contains generic words ("function",
-// "returns", "expected") — and because those generic words match constantly
+// "returns", "expected") - and because those generic words match constantly
 // throughout a codebase, the match cap filled up with noise from files
 // earlier in the walk order, before ever reaching the file the SPECIFIC
 // keyword (the actual identifier) would have found. Fixed by scoring every
@@ -94,7 +94,7 @@ export async function searchRepo(keywords: string[]): Promise<string> {
   const escaped = keywords.map((k) => ({ length: k.length, re: new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi") }));
 
   // Score = sum of the LENGTHS of every distinct keyword that matches this
-  // line — not just a count of how many matched. A line matching one long,
+  // line - not just a count of how many matched. A line matching one long,
   // specific keyword (an actual identifier) outscores several matches of a
   // short, generic word; a line matching multiple keywords scores highest
   // of all, since that's the strongest signal it's actually relevant.
@@ -115,13 +115,13 @@ export async function searchRepo(keywords: string[]): Promise<string> {
     try {
       entries = await fs.readdir(dir, { withFileTypes: true });
     } catch {
-      return; // directory doesn't exist in this environment — skip, don't crash
+      return; // directory doesn't exist in this environment - skip, don't crash
     }
     for (const entry of entries) {
       if (candidates.length >= MAX_SCAN_MATCHES) return;
       if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
       const full = path.join(dir, entry.name);
-      // Excludes the Dev Assistant's OWN implementation — its comments are
+      // Excludes the Dev Assistant's OWN implementation - its comments are
       // dense with exactly the vocabulary ("authentication", "duplicate",
       // "search") a real question would use, which crowded out actual
       // application code within the match cap during live testing (see
@@ -154,8 +154,8 @@ export async function searchRepo(keywords: string[]): Promise<string> {
 }
 
 // --- Git history: best-effort. A deployed backend image typically ships
-// only compiled dist/ + node_modules (see backend/Dockerfile) — no .git
-// directory, often no `git` binary either — so this degrades to a clear
+// only compiled dist/ + node_modules (see backend/Dockerfile) - no .git
+// directory, often no `git` binary either - so this degrades to a clear
 // "unavailable" message rather than throwing, exactly like the AI feature's
 // own no-API-key fallback degrades instead of erroring. ---
 export async function getRecentGitLog(count = 10): Promise<string> {
@@ -163,7 +163,7 @@ export async function getRecentGitLog(count = 10): Promise<string> {
     const { stdout } = await execFileAsync("git", ["log", `-n${count}`, "--oneline"], { cwd: REPO_ROOT, timeout: 5000 });
     return stdout.trim() || "No commits found.";
   } catch {
-    return "Git history unavailable in this environment (no .git directory or no `git` binary on PATH — expected in a deployed container).";
+    return "Git history unavailable in this environment (no .git directory or no `git` binary on PATH - expected in a deployed container).";
   }
 }
 
@@ -178,19 +178,19 @@ export async function getUncommittedDiff(): Promise<string> {
 
 // --- Recent logs: searches the in-memory ring buffer (logBuffer.ts), which
 // mirrors every structured log line this process has emitted since it
-// started (capped at 500 entries). Matches ANY keyword — same OR-not-AND
+// started (capped at 500 entries). Matches ANY keyword - same OR-not-AND
 // reasoning as searchRepo above. ---
 export function searchRecentLogs(keywords: string[]): string {
   if (!keywords.length) return "No meaningful search keywords could be extracted from the question.";
   const entries = keywords.flatMap((k) => getRecentLogs(k, 10));
   const unique = [...new Map(entries.map((e) => [`${e.time}-${e.msg}`, e])).values()].slice(-20);
   if (!unique.length) return `No recent log lines matched [${keywords.join(", ")}].`;
-  return unique.map((e) => `[${new Date(e.time).toISOString()}] ${e.msg}${e.err ? ` — ${JSON.stringify(e.err).slice(0, 200)}` : ""}`).join("\n");
+  return unique.map((e) => `[${new Date(e.time).toISOString()}] ${e.msg}${e.err ? ` - ${JSON.stringify(e.err).slice(0, 200)}` : ""}`).join("\n");
 }
 
 // --- Test suite: the ONE tool here with a real side effect (it actually
 // runs the backend's Vitest suite), but it's still read-only with respect
-// to the CODEBASE — it doesn't write anything, doesn't apply a fix, and its
+// to the CODEBASE - it doesn't write anything, doesn't apply a fix, and its
 // own in-memory MongoDB is thrown away when the run ends. Capped with a
 // generous timeout since a full run (unit + integration) takes ~10-15s. ---
 interface TestRunResult {
@@ -198,7 +198,7 @@ interface TestRunResult {
   summary: string;
 }
 
-// The shared implementation — `npm test` exits non-zero (execFile throws)
+// The shared implementation - `npm test` exits non-zero (execFile throws)
 // exactly when Vitest found a failure, which is the real, authoritative
 // pass/fail signal (not string-matching "FAIL" in the output, which could
 // theoretically appear in a passing run's incidental text). Two exported

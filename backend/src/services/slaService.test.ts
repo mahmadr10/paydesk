@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { computeSlaStatus, addMinutes } from "./slaService";
 
-// Every test here works in plain Date math — no live clock, no timezone
-// assumptions — because computeSlaStatus is a pure function of the
+// Every test here works in plain Date math - no live clock, no timezone
+// assumptions - because computeSlaStatus is a pure function of the
 // timestamps you hand it. That's what makes it testable without flakiness:
 // a test that used `new Date()` directly would occasionally fail depending
 // on exactly when it happened to run.
@@ -34,7 +34,7 @@ describe("slaService: computeSlaStatus", () => {
     expect(result.responseRemainingMs).toBeLessThan(0);
   });
 
-  it("freezes the response clock at the moment of first response — replying late still counts as breached", () => {
+  it("freezes the response clock at the moment of first response - replying late still counts as breached", () => {
     const result = computeSlaStatus({
       responseDeadline: addMinutes(T0, 15),
       resolutionDeadline: addMinutes(T0, 240),
@@ -51,7 +51,7 @@ describe("slaService: computeSlaStatus", () => {
       resolutionDeadline: addMinutes(T0, 240),
       firstResponseAt: addMinutes(T0, 10), // responded at +10, before the +15 deadline
       resolvedAt: null,
-      now: addMinutes(T0, 999), // long after — must not matter anymore
+      now: addMinutes(T0, 999), // long after - must not matter anymore
     });
     expect(result.responseBreached).toBe(false);
   });
@@ -68,7 +68,7 @@ describe("slaService: computeSlaStatus", () => {
     expect(result.resolutionBreached).toBe(false);
   });
 
-  it("addMinutes is pure UTC epoch math — unaffected by any notion of local timezone", () => {
+  it("addMinutes is pure UTC epoch math - unaffected by any notion of local timezone", () => {
     const result = addMinutes(T0, 90);
     expect(result.getTime()).toBe(T0.getTime() + 90 * 60_000);
   });
