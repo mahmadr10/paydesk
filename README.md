@@ -17,7 +17,7 @@ Small online sellers lose money on PayPal disputes and refund requests: they ans
 | **Webhooks** + `verify-webhook-signature` | `CUSTOMER.DISPUTE.*` events open and update cases. Every event is verified with PayPal and stored once (idempotent). |
 | **PayPal Agent Toolkit** (`@paypal/agent-toolkit`) | "Ask PayPal" chat tools: disputes, transactions, orders, refunds, invoices, insights (read-only) |
 
-The PayPal Server SDK integration was written with **APIMatic's Context Plugin for PayPal** (`paypaldev/server-sdk-context-plugin-preview`). Its TypeScript skills guided client setup (single long-lived `Client`, `clientCredentialsAuthCredentials`, `oAuthClockSkew`), named-argument calls, timeouts/retries (the SDK defaults to none) and `ApiError` handling. See `backend/src/services/paypalService.ts`.
+The PayPal Server SDK integration was written with **APIMatic's Context Plugin for PayPal** (`paypaldev/server-sdk-context-plugin-preview`). Its TypeScript skills guided client setup (single long-lived `Client`, `clientCredentialsAuthCredentials`, `oAuthClockSkew`), named-argument calls, timeouts/retries and `ApiError` handling. Its resilience skill caught a real bug: SDK retries never happen unless `maximumRetryWaitTime` is also set, because its generated default is 0. Its testing skill gave the stub-transport seam used in `paypalService.sandbox.test.ts`. See `backend/src/services/paypalService.ts`.
 
 ## How AI is used (and kept safe)
 
@@ -66,10 +66,12 @@ Without PayPal keys a built-in simulator stands in for PayPal (the UI says so). 
 ## Tests
 
 ```bash
-cd backend && npm test    # 62 tests: unit + integration (real HTTP, in-memory MongoDB)
+cd backend && npm test    # 70 tests: unit + integration (real HTTP, in-memory MongoDB)
 ```
 
-These cover buy → capture → smart intake → duplicate detection → approve → refund → resolved; dispute → evidence → contest → adjudication; the policy guard; double-approve protection; and cross-customer access.
+These cover buy → capture → smart intake → duplicate detection → approve → refund → resolved; dispute → evidence → contest → adjudication; the policy guard; double-approve protection; and cross-customer access. The real PayPal code path (Server SDK + Disputes REST) is also tested against a stub transport, so the sandbox integration is checked without network access.
+
+**Free to run:** Groq free tier, PayPal Sandbox, MongoDB Atlas M0, Render free plan (sleeps after 15 min idle, so the first load takes about 30 seconds).
 
 ## Stack
 
