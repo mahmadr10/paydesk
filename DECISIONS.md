@@ -2,7 +2,6 @@
 
 Each entry: the decision, the alternatives actually considered, why this
 one won, and the honest trade-off.
-
 ## 1. MongoDB (with Mongoose) over a relational database
 
 **Alternatives considered**: PostgreSQL (with Prisma or raw SQL).

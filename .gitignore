@@ -25,3 +25,8 @@ test-results/
 demo/*.webm
 demo/*.mp4
 demo/raw/
+
+
+.env.example
+backend/.env.example
+frontend/.env.example
