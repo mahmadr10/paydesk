@@ -69,7 +69,7 @@ paypal, paypal-server-sdk, paypal-disputes-api, paypal-webhooks, paypal-agent-to
 
 **"Try it out" links**
 ```
-https://github.com/[your-username]/paydesk
+https://github.com/mahmadr10/paydesk
 ```
 
 **Video**: [YouTube link after you upload demo/paydesk-demo.mp4]
@@ -110,12 +110,12 @@ AI:
 
 **Public code repository URL**
 ```
-https://github.com/[your-username]/paydesk
+https://github.com/mahmadr10/paydesk
 ```
 
 **Working demo / hosted app URL**
 ```
-https://github.com/[your-username]/paydesk#run-it-locally-about-2-minutes
+https://github.com/mahmadr10/paydesk#run-it-locally-about-2-minutes
 ```
 
 **Testing instructions**
