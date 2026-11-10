@@ -23,7 +23,19 @@ async function getApp() {
   if (appInstance) return appInstance;
   if (initError) throw initError;
   try {
-    const { createApp } = await import("../src/app");
+    let createApp: any;
+    try {
+      // In production Vercel deployment, compiled code resides in dist/app.js
+      const mod = await import("../dist/app.js");
+      createApp = mod.createApp || (mod as any).default?.createApp || (mod as any).default;
+    } catch (distErr) {
+      try {
+        const mod = await import("../src/app");
+        createApp = mod.createApp || (mod as any).default?.createApp || (mod as any).default;
+      } catch {
+        throw distErr;
+      }
+    }
     appInstance = createApp();
     return appInstance;
   } catch (err: any) {
