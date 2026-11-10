@@ -9,7 +9,7 @@
   "crons": [
     {
       "path": "/api/cron/sla-breach",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
