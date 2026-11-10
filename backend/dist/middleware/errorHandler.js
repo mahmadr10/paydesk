@@ -27,12 +27,16 @@ function errorHandler(err, req, res, _next) {
         });
     }
     // Anything we didn't throw on purpose (a bug, a library error) - log the
-    // FULL error (stack trace included) for ourselves, but show the client
-    // only a generic message plus the requestId to look it up by.
+    // FULL error (stack trace included) for ourselves.
     req.log?.error({ err }, "Unexpected error");
+    const errorDetails = err instanceof Error ? { message: err.message, name: err.name, stack: err.stack } : { message: String(err) };
     return res.status(500).json({
         success: false,
-        error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred." },
+        error: {
+            code: "INTERNAL_ERROR",
+            message: err?.message || "An unexpected error occurred.",
+            details: errorDetails,
+        },
         requestId,
     });
 }
