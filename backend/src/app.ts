@@ -44,8 +44,9 @@ export function createApp() {
   );
 
   // Parse comma-separated origins from FRONTEND_ORIGIN (e.g. "https://app.vercel.app,http://localhost:5173")
+  // Strip trailing slashes so comparisons with browser Origin headers (which never have trailing slashes) succeed.
   const configuredOrigins = env.FRONTEND_ORIGIN.split(",")
-    .map((o) => o.trim())
+    .map((o) => o.trim().replace(/\/+$/, ""))
     .filter(Boolean);
 
   const corsOptions: CorsOptions = {
@@ -53,23 +54,35 @@ export function createApp() {
       // Allow requests with no origin (mobile apps, server-to-server, curl, Postman)
       if (!origin) return callback(null, true);
 
-      if (configuredOrigins.includes("*") || configuredOrigins.includes(origin)) {
+      const normalizedOrigin = origin.trim().replace(/\/+$/, "");
+
+      // 1. Allow all if wildcard configured
+      if (configuredOrigins.includes("*")) {
         return callback(null, true);
       }
 
-      // Allow Vercel preview deployments if any configured origin is a vercel.app domain
-      if (origin.endsWith(".vercel.app") && configuredOrigins.some((o) => o.includes("vercel.app"))) {
+      // 2. Allow if explicitly matched in FRONTEND_ORIGIN
+      if (configuredOrigins.includes(normalizedOrigin)) {
         return callback(null, true);
       }
 
-      // Allow localhost in development
-      if (!isProduction && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      // 3. Automatically allow all Vercel deployments (*.vercel.app)
+      if (normalizedOrigin.endsWith(".vercel.app") || normalizedOrigin === "https://vercel.app") {
+        return callback(null, true);
+      }
+
+      // 4. Allow localhost in development
+      if (!isProduction && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(normalizedOrigin)) {
         return callback(null, true);
       }
 
       return callback(null, false);
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Cookie"],
+    exposedHeaders: ["Set-Cookie"],
+    optionsSuccessStatus: 200,
   };
 
   app.use(cors(corsOptions));
