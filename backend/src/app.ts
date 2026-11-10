@@ -97,7 +97,7 @@ export function createApp() {
   app.get("/api/health", healthHandler);
 
   // Gracefully respond to Socket.IO polling in serverless environments (avoids console 404 noise)
-  app.all("/socket.io*", (_req, res) => {
+  app.use("/socket.io", (_req, res) => {
     res.status(200).json({ success: true, message: "Socket.IO real-time is disabled in serverless mode" });
   });
 
