@@ -6,6 +6,11 @@
       "destination": "/api"
     }
   ],
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "dist/**"
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/sla-breach",
