@@ -6,7 +6,7 @@ import { setIO } from "./io";
 
 export function initSockets(httpServer: HttpServer) {
   const io = new Server(httpServer, {
-    cors: { origin: env.FRONTEND_ORIGIN, credentials: true },
+    cors: { origin: true, credentials: true },
   });
 
   // Same JWT the REST API uses, sent once at connection time and verified
