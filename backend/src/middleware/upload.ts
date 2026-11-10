@@ -2,10 +2,22 @@ import multer from "multer";
 import path from "path";
 import crypto from "crypto";
 import fs from "fs";
+import os from "os";
 import { AppError } from "../utils/AppError";
 
-export const UPLOAD_DIR = path.join(__dirname, "..", "..", "uploads");
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+export const UPLOAD_DIR = isServerless
+  ? path.join(os.tmpdir(), "uploads")
+  : path.join(__dirname, "..", "..", "uploads");
+
+try {
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  }
+} catch {
+  // Ignore filesystem errors at module load time in constrained / read-only environments
+}
 
 // Whitelist, not blacklist - we only accept file types we can vouch for.
 // This is the main defense against someone uploading something dangerous
@@ -25,7 +37,16 @@ const ALLOWED_MIME_TYPES = new Set([
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+  destination: (_req, _file, cb) => {
+    try {
+      if (!fs.existsSync(UPLOAD_DIR)) {
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+      }
+    } catch {
+      // safe fallback
+    }
+    cb(null, UPLOAD_DIR);
+  },
   filename: (_req, file, cb) => {
     // Never trust the client's filename for the ON-DISK name - it could
     // contain path-traversal characters ("../../etc") or collide with an
