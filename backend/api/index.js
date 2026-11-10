@@ -1,6 +1,5 @@
-const { createApp } = require("../dist/app");
-
 let app = null;
+let loadError = null;
 
 function setCorsHeaders(req, res) {
   const origin = req.headers.origin;
@@ -18,6 +17,19 @@ function setCorsHeaders(req, res) {
   res.setHeader("Access-Control-Expose-Headers", "Set-Cookie");
 }
 
+function getApp() {
+  if (app) return app;
+  if (loadError) throw loadError;
+  try {
+    const { createApp } = require("../dist/app");
+    app = createApp();
+    return app;
+  } catch (err) {
+    loadError = err;
+    throw err;
+  }
+}
+
 module.exports = async function handler(req, res) {
   setCorsHeaders(req, res);
 
@@ -26,14 +38,12 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    if (!app) {
-      app = createApp();
-    }
+    const appInstance = getApp();
     return new Promise((resolve, reject) => {
       res.on("finish", resolve);
       res.on("close", resolve);
       res.on("error", reject);
-      app(req, res);
+      appInstance(req, res);
     });
   } catch (error) {
     console.error("Vercel Serverless Function Startup Error:", error);
@@ -46,4 +56,4 @@ module.exports = async function handler(req, res) {
   }
 };
 
-module.exports.app = app;
+module.exports.app = getApp;
