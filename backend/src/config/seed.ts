@@ -15,6 +15,21 @@ let isSeeded = false;
 // an admin has already customized.
 export async function seedDefaults() {
   if (isSeeded) return;
+
+  // Clean up any rogue/legacy indexes (e.g. from previous schemas)
+  try {
+    const usersCol = (Category.db as any).collection("users");
+    const indexes = await usersCol.indexes();
+    for (const idx of indexes) {
+      if (idx.name === "userName_1" || (idx.key && idx.key.userName)) {
+        await usersCol.dropIndex(idx.name);
+        logger.info(`Dropped legacy ${idx.name} index from users collection`);
+      }
+    }
+  } catch (_e) {
+    // ignore
+  }
+
   const categoryCount = await Category.countDocuments();
   if (categoryCount === 0) {
     await Category.insertMany(DEFAULT_CATEGORIES.map((name) => ({ name, isActive: true })));

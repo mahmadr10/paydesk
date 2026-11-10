@@ -16,6 +16,20 @@ let isSeeded = false;
 async function seedDefaults() {
     if (isSeeded)
         return;
+    // Clean up any rogue/legacy indexes (e.g. from previous schemas)
+    try {
+        const usersCol = Category_1.Category.db.collection("users");
+        const indexes = await usersCol.indexes();
+        for (const idx of indexes) {
+            if (idx.name === "userName_1" || (idx.key && idx.key.userName)) {
+                await usersCol.dropIndex(idx.name);
+                logger_1.logger.info(`Dropped legacy ${idx.name} index from users collection`);
+            }
+        }
+    }
+    catch (_e) {
+        // ignore
+    }
     const categoryCount = await Category_1.Category.countDocuments();
     if (categoryCount === 0) {
         await Category_1.Category.insertMany(DEFAULT_CATEGORIES.map((name) => ({ name, isActive: true })));
