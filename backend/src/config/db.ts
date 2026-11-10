@@ -18,12 +18,34 @@ async function resolveMongoUri(): Promise<string> {
   return server.getUri("paydesk");
 }
 
+let cachedPromise: Promise<typeof mongoose> | null = null;
+
 export async function connectDB() {
+  // If already connected or connecting, reuse the existing connection
+  if (mongoose.connection.readyState >= 1) {
+    return mongoose;
+  }
+
+  if (!cachedPromise) {
+    cachedPromise = (async () => {
+      const uri = await resolveMongoUri();
+      return mongoose.connect(uri, {
+        serverSelectionTimeoutMS: 10000,
+        maxPoolSize: process.env.VERCEL ? 10 : undefined,
+      });
+    })();
+  }
+
   try {
-    await mongoose.connect(await resolveMongoUri());
+    const conn = await cachedPromise;
     logger.info("MongoDB connected");
+    return conn;
   } catch (err) {
+    cachedPromise = null;
     logger.error({ err }, "MongoDB connection failed");
-    process.exit(1);
+    if (!process.env.VERCEL) {
+      process.exit(1);
+    }
+    throw err;
   }
 }

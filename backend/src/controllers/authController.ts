@@ -7,10 +7,12 @@ import { env, isProduction } from "../config/env";
 // Centralizing the cookie options in one place means the "set" and "clear"
 // calls can never accidentally disagree on path/sameSite/secure and leave a
 // cookie the browser won't actually delete.
+// In production (e.g. Vercel backend + Vercel frontend), sameSite: "none" and secure: true
+// are required for cross-domain credentials to work.
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true, // frontend JS can never read this - the whole point of using a cookie instead of localStorage for it
   secure: isProduction, // only sent over HTTPS in production; localhost dev has no TLS
-  sameSite: "lax" as const,
+  sameSite: isProduction ? ("none" as const) : ("lax" as const),
   path: "/api/v1/auth", // only sent back to auth endpoints, not every API call
   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days, matches REFRESH_TOKEN_TTL_MS in utils/jwt.ts
 };
@@ -42,7 +44,11 @@ export async function refresh(req: Request, res: Response) {
 export async function logout(req: Request, res: Response) {
   const rawRefreshToken = req.cookies?.[env.JWT_REFRESH_COOKIE_NAME];
   await logoutUser(rawRefreshToken);
-  res.clearCookie(env.JWT_REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_OPTIONS.path });
+  res.clearCookie(env.JWT_REFRESH_COOKIE_NAME, {
+    path: REFRESH_COOKIE_OPTIONS.path,
+    secure: REFRESH_COOKIE_OPTIONS.secure,
+    sameSite: REFRESH_COOKIE_OPTIONS.sameSite,
+  });
   res.status(200).json({ success: true, data: null });
 }
 

@@ -78,17 +78,43 @@ why, and what adding one would look like.
 
 ## Deploying live
 
-This step needs accounts on a hosting platform, which only the project
-owner can create. The chosen split: **Render** for the backend, **Vercel**
-for the frontend - Render because it builds directly from
-`backend/Dockerfile` and keeps a persistent Node process alive (required
-for Socket.IO - a serverless platform like plain Vercel functions can't
-hold a WebSocket connection open), Vercel because it's purpose-built for a
-static Vite/React build with zero configuration.
+You can deploy the backend to **Vercel** (Serverless Functions) or **Render** (persistent container), and the frontend to **Vercel**.
 
-### Backend on Render
+### Backend on Vercel (Serverless)
 
-A `render.yaml` Blueprint at the repo root does most of this for you:
+The backend has been adapted to run seamlessly on Vercel serverless functions via `backend/api/index.ts` and `backend/vercel.json`:
+- **Serverless database pooling**: Caches MongoDB connections across warm lambdas to prevent connection exhaustion.
+- **Auto-initialization**: Seeds defaults (categories, SLA policies) automatically on cold starts.
+- **Cross-origin cookies**: Configured with `SameSite=None` and `Secure` in production so refresh tokens work across different Vercel domains.
+- **SLA Breach Cron**: Runs via Vercel Cron (`/api/cron/sla-breach`) instead of a persistent background interval.
+- **Real-time note**: Socket.IO events gracefully degrade to silent no-ops in serverless mode (REST API and notifications persist normally in MongoDB).
+
+#### Step-by-step:
+
+1. [vercel.com](https://vercel.com) → **Add New** → **Project** → Import your repository.
+2. In the setup screen:
+   - **Root Directory**: Click "Edit" and choose **`backend`**.
+   - **Framework Preset**: Other (default).
+   - **Build Command**: `npm run build` (or leave default).
+   - **Output Directory**: Leave empty / default.
+3. Under **Environment Variables**, add:
+   - `NODE_ENV` = `production`
+   - `MONGODB_URI` = your MongoDB Atlas connection string (e.g. `mongodb+srv://...`)
+   - `JWT_ACCESS_SECRET` = a secure random string (at least 32 characters)
+   - `FRONTEND_ORIGIN` = your frontend Vercel URL (e.g. `https://paydesk.vercel.app` or multiple separated by comma: `https://paydesk.vercel.app,http://localhost:5173`)
+   - `AI_ENABLED` = `true` (optional)
+   - `GROQ_API_KEY` = your Groq API key (optional)
+   - `PAYPAL_CLIENT_ID` = your PayPal Sandbox Client ID (optional)
+   - `PAYPAL_CLIENT_SECRET` = your PayPal Sandbox Secret (optional)
+   - `CRON_SECRET` = random secret string for Vercel Cron authentication (optional)
+4. Click **Deploy**.
+5. Once deployed, test your API:
+   - `https://<your-backend>.vercel.app/` -> returns `{ "success": true, "message": "PayDesk API is running" }`
+   - `https://<your-backend>.vercel.app/api/health` -> returns `{ "success": true, "database": "connected" }`
+
+### Backend on Render (Persistent Container)
+
+If you prefer keeping persistent WebSockets for live Socket.IO events, Render keeps a persistent Node container alive. A `render.yaml` Blueprint at the repo root does most of this for you:
 
 1. [render.com](https://render.com) → sign up/log in (GitHub login is
    easiest, since the next step needs repo access anyway).

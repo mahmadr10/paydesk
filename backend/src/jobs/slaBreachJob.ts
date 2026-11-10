@@ -81,6 +81,10 @@ export function startSlaBreachJob() {
     logger.info("SLA breach job disabled (JOBS_ENABLED=false)");
     return;
   }
+  if (process.env.VERCEL) {
+    logger.info("SLA breach job running via Vercel Cron endpoints (/api/cron/sla-breach)");
+    return;
+  }
   task = schedule("* * * * *", () => {
     checkSlaBreaches().catch((err) => logger.error({ err }, "SLA breach job failed"));
   });

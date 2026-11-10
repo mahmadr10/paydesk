@@ -21,7 +21,8 @@ import { PrometheusExporter } from "@opentelemetry/exporter-prometheus";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
 
-const otelEnabled = (process.env.OTEL_ENABLED ?? "true") !== "false";
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const otelEnabled = (process.env.OTEL_ENABLED ?? (isServerless ? "false" : "true")) !== "false";
 const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT; // e.g. http://jaeger:4318
 const metricsPort = Number(process.env.OTEL_METRICS_PORT ?? 9464);
 const serviceName = process.env.OTEL_SERVICE_NAME ?? "servicedesk-backend";
@@ -37,16 +38,9 @@ if (otelEnabled) {
     ? new OTLPTraceExporter({ url: `${otlpEndpoint}/v1/traces` })
     : new ConsoleSpanExporter();
 
-  // Metrics: PrometheusExporter starts its own tiny HTTP server and serves
-  // metrics in Prometheus's scrape format directly - no collector needed,
-  // Prometheus (or a curl in the demo video) can hit it as-is. This is a
-  // deliberate choice, not the only valid one: an OTLP metrics exporter
-  // (paired with the trace exporter above) would also work and would let a
-  // full OTel Collector pipeline handle both signals uniformly - chosen
-  // Prometheus's pull model instead because it needs nothing running to be
-  // useful (`curl localhost:9464/metrics` works with zero other services up),
-  // where OTLP metrics would need a collector or backend already listening.
-  const metricReader = new PrometheusExporter({ port: metricsPort });
+  // Metrics: PrometheusExporter starts its own HTTP server on metricsPort.
+  // In serverless environments (e.g. Vercel), don't bind a separate port.
+  const metricReader = isServerless ? undefined : new PrometheusExporter({ port: metricsPort });
 
   const sdk = new NodeSDK({
     resource: resourceFromAttributes({
@@ -72,12 +66,12 @@ if (otelEnabled) {
   // Plain console.log, not the Pino logger - this runs before the logger
   // module (and its env-driven config) is even imported.
   console.log(
-    `[otel] tracing started (service=${serviceName}, traces=${otlpEndpoint ? `OTLP ${otlpEndpoint}` : "console"}, metrics=http://localhost:${metricsPort}/metrics)`
+    `[otel] tracing started (service=${serviceName}, traces=${otlpEndpoint ? `OTLP ${otlpEndpoint}` : "console"}${metricReader ? `, metrics=http://localhost:${metricsPort}/metrics` : ""})`
   );
 
   process.on("SIGTERM", () => {
     sdk.shutdown().finally(() => process.exit(0));
   });
 } else {
-  console.log("[otel] tracing disabled (OTEL_ENABLED=false)");
+  console.log(`[otel] tracing disabled (OTEL_ENABLED=${otelEnabled})`);
 }

@@ -44,6 +44,7 @@ const envSchema = z.object({
   // and in the E2E harness (nothing there depends on it, and a cron ticking
   // during a short-lived test run is just noise).
   JOBS_ENABLED: z.enum(["true", "false"]).default("true"),
+  CRON_SECRET: z.string().optional(),
 
   // PayPal (sandbox). Both keys come from developer.paypal.com -> Apps &
   // Credentials -> Sandbox. Leave them unset and the app runs a simulated
