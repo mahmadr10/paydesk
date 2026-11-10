@@ -64,9 +64,12 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error("❌ Invalid or missing environment variables:");
-  console.error(parsed.error.issues.map((i) => `  - ${i.path.join(".")}: ${i.message}`).join("\n"));
-  process.exit(1);
+  const issues = parsed.error.issues.map((i) => `  - ${i.path.join(".")}: ${i.message}`).join("\n");
+  console.error("❌ Invalid or missing environment variables:\n" + issues);
+  if (!process.env.VERCEL) {
+    process.exit(1);
+  }
+  throw new Error("Invalid or missing environment variables:\n" + issues);
 }
 
 export const env = parsed.data;

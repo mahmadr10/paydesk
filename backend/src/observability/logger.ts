@@ -12,6 +12,8 @@ import { pushLogEntry } from "./logBuffer";
 // In development we pipe through pino-pretty for a human-readable
 // colorized line-by-line view; in production we emit raw JSON (what a log
 // aggregator like Datadog/CloudWatch/Grafana Loki actually wants).
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
 export const logger = pino({
   level: process.env.LOG_LEVEL || "info",
   redact: {
@@ -39,7 +41,7 @@ export const logger = pino({
       return method.apply(this, inputArgs as [never, ...never[]]);
     },
   },
-  transport: isProduction
+  transport: isProduction || isServerless
     ? undefined
     : {
         target: "pino-pretty",
