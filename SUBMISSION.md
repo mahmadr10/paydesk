@@ -40,7 +40,7 @@ Everything in this demo runs on the PayPal Sandbox with test money.
 - **PayPal:** Smart Buttons for checkout, the PayPal Server SDK for orders and refunds, the Disputes API, webhooks, and PayPal's Agent Toolkit for the chat.
 - **AI:** LangGraph agents on Groq. Each agent gathers facts from PayPal, decides, passes a rules check, and drafts a reply.
 - **App:** React, Node.js, Express, MongoDB and TypeScript, with 85 automated tests.
-- We built the PayPal payment and refund code with APIMatic's Context Plugin for PayPal.
+- We built the PayPal payment and refund code with **APIMatic's Context Plugin for PayPal** and the PayPal Server SDK that APIMatic makes. It was a big help: its guides gave us the right setup, error handling and tests from the start, and caught a bug in our retry settings.
 
 ## Built to be safe
 - Rules written in code check every AI suggestion: the refund window, never more than what is left, and proof before contesting a dispute.
@@ -49,7 +49,7 @@ Everything in this demo runs on the PayPal Sandbox with test money.
 - Nothing moves until a person approves.
 
 ## What we learned
-How PayPal disputes work, how to verify webhooks, and how to keep a person in charge when AI works near money.
+How PayPal disputes work, how to verify webhooks, how much a good SDK and good guides like APIMatic's help a developer, and how to keep a person in charge when AI works near money.
 ```
 
 **Built with** (tags)
