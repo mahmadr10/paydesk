@@ -39,6 +39,21 @@ function paypalMode() {
 const money = (n) => n.toFixed(2);
 // ── PayPal Server SDK client (built once, reused) ────────────────────────
 let sdkClient = null;
+// Sends the SDK's own request/response log lines into our structured logger
+// (built-in logging, from the APIMatic plugin's resilience skill). Request
+// headers and all bodies are NOT logged. The response's paypal-debug-id header
+// is, so a failed call can be traced with PayPal support.
+const sdkLogger = {
+    log(level, message, params) {
+        const method = level === paypal_server_sdk_1.LogLevel.Error ? "error" : level === paypal_server_sdk_1.LogLevel.Warn ? "warn" : level === paypal_server_sdk_1.LogLevel.Debug ? "debug" : "info";
+        logger_1.logger[method]({ paypalSdk: params }, message);
+    },
+};
+// Upper bound for ONE SDK call including its retries (a retry round on its own
+// can take 45 s). The resilience skill's abortSignal; it does not cover the
+// separate token request, which has its own 15 s timeout.
+const CALL_TIMEOUT_MS = 25_000;
+const callOptions = () => ({ abortSignal: AbortSignal.timeout(CALL_TIMEOUT_MS) });
 function sdk() {
     if (testOverride.client)
         return testOverride.client;
@@ -65,11 +80,49 @@ function sdk() {
                     httpMethodsToRetry: ["GET", "PUT", "POST"],
                 },
             },
+            logging: {
+                logger: sdkLogger,
+                logLevel: paypal_server_sdk_1.LogLevel.Info,
+                logRequest: { logBody: false, logHeaders: false },
+                // headersToWhitelist un-masks just this one header (the debug id is not a secret).
+                logResponse: { logBody: false, logHeaders: true, headersToInclude: ["paypal-debug-id"], headersToWhitelist: ["paypal-debug-id"] },
+                maskSensitiveHeaders: true,
+            },
         });
     }
     return sdkClient;
 }
-// Turn an SDK ApiError into our AppError, keeping PayPal's issue code.
+// What the common PayPal issue codes mean for a user: a proper HTTP status and
+// a plain message (instead of one generic 502 for everything). The code stays
+// in brackets so it can still be looked up.
+const PAYPAL_ISSUES = {
+    ORDER_NOT_APPROVED: { status: 409, message: "The buyer has not approved this payment in PayPal yet." },
+    ORDER_ALREADY_CAPTURED: { status: 409, message: "This payment was already completed." },
+    INSTRUMENT_DECLINED: { status: 402, message: "PayPal declined this payment method. Try another one." },
+    PAYER_ACTION_REQUIRED: { status: 409, message: "The buyer needs to finish an extra step in PayPal." },
+    CAPTURE_FULLY_REFUNDED: { status: 409, message: "This payment was already fully refunded." },
+    REFUND_AMOUNT_EXCEEDED: { status: 422, message: "That refund is more than what is left on this payment." },
+    RESOURCE_NOT_FOUND: { status: 404, message: "PayPal could not find that payment." },
+};
+function issueToError(issue, what) {
+    const known = PAYPAL_ISSUES[issue];
+    if (known)
+        return new AppError_1.AppError(known.status, "PAYPAL_ERROR", `${known.message} (${issue})`);
+    return new AppError_1.AppError(502, "PAYPAL_ERROR", `PayPal rejected the ${what} (${issue}).`);
+}
+function isTimeout(err) {
+    const e = err;
+    if (!e)
+        return false;
+    return (e.name === "AbortError" ||
+        e.name === "TimeoutError" ||
+        e.name === "CanceledError" ||
+        e.code === "ERR_CANCELED" ||
+        e.code === "ECONNABORTED" ||
+        /timeout|timed out|aborted/i.test(String(e.message ?? "")));
+}
+// Turn an SDK error into our AppError. An ApiError carries PayPal's issue code
+// in its payload (snake_case field names, as the error-handling skill warns).
 function fromSdkError(err, what) {
     if (err instanceof paypal_server_sdk_1.ApiError) {
         let issue = `HTTP ${err.statusCode}`;
@@ -81,7 +134,11 @@ function fromSdkError(err, what) {
         catch {
             logger_1.logger.error({ status: err.statusCode }, `PayPal ${what} failed`);
         }
-        throw new AppError_1.AppError(502, "PAYPAL_ERROR", `PayPal rejected the ${what} (${issue}).`);
+        throw issueToError(issue, what);
+    }
+    if (isTimeout(err)) {
+        logger_1.logger.error({ what }, `PayPal ${what} timed out`);
+        throw new AppError_1.AppError(504, "PAYPAL_TIMEOUT", "PayPal took too long to answer. Please try again in a moment.");
     }
     throw err;
 }
@@ -161,7 +218,7 @@ async function createOrder(input) {
             },
             paypalRequestId: `create-${input.referenceId}`,
             prefer: "return=minimal",
-        });
+        }, callOptions());
         if (!result.id)
             throw new AppError_1.AppError(502, "PAYPAL_ERROR", "PayPal did not return an order id.");
         return { paypalOrderId: result.id };
@@ -184,7 +241,7 @@ async function captureOrder(paypalOrderId) {
             id: paypalOrderId,
             paypalRequestId: `capture-${paypalOrderId}`,
             prefer: "return=representation",
-        });
+        }, callOptions());
         const capture = result.purchaseUnits?.[0]?.payments?.captures?.[0];
         if (!capture?.id || !capture.amount)
             throw new AppError_1.AppError(502, "PAYPAL_ERROR", "PayPal did not return a capture.");
@@ -210,7 +267,7 @@ async function getCaptureDetails(captureId) {
         return { captureId, status, amount: c.amount, currency: c.currency, createTime: c.createTime };
     }
     try {
-        const { result } = await new paypal_server_sdk_1.PaymentsController(sdk()).getCapturedPayment({ captureId });
+        const { result } = await new paypal_server_sdk_1.PaymentsController(sdk()).getCapturedPayment({ captureId }, callOptions());
         return {
             captureId: result.id ?? captureId,
             status: String(result.status ?? "UNKNOWN"),
@@ -229,7 +286,7 @@ async function refundCapture(input) {
         if (!c)
             throw new AppError_1.AppError(404, "NOT_FOUND", "Simulated PayPal capture not found.");
         if (c.refunded + input.amount > c.amount + 0.001) {
-            throw new AppError_1.AppError(422, "PAYPAL_ERROR", "PayPal rejected the refund (REFUND_AMOUNT_EXCEEDED).");
+            throw issueToError("REFUND_AMOUNT_EXCEEDED", "refund");
         }
         c.refunded += input.amount;
         return { refundId: simId("REFUND"), status: "COMPLETED", amount: input.amount, currency: input.currency };
@@ -243,7 +300,7 @@ async function refundCapture(input) {
                 amount: { currencyCode: input.currency, value: money(input.amount) },
                 noteToPayer: input.note.slice(0, 255),
             },
-        });
+        }, callOptions());
         return {
             refundId: result.id ?? "unknown",
             status: String(result.status ?? "UNKNOWN"),

@@ -106,6 +106,57 @@ describe("PayPal Server SDK path (sandbox mode)", () => {
       .catch((e) => e);
     expect(err).toBeInstanceOf(AppError);
     expect(err.message).toContain("REFUND_AMOUNT_EXCEEDED");
+    expect(err.statusCode).toBe(422);
+  });
+
+  // Known PayPal issue codes become a proper HTTP status and a plain message;
+  // unknown ones stay a generic 502 that still names the code.
+  it.each([
+    ["ORDER_NOT_APPROVED", 409, "has not approved"],
+    ["INSTRUMENT_DECLINED", 402, "declined"],
+    ["CAPTURE_FULLY_REFUNDED", 409, "already fully refunded"],
+    ["SOMETHING_NEW", 502, "SOMETHING_NEW"],
+  ])("maps PayPal issue %s to HTTP %i", async (issue, status, text) => {
+    const { client } = stubClient(() => ({
+      status: 422,
+      body: { name: "UNPROCESSABLE_ENTITY", details: [{ issue }], debug_id: "dbg-1" },
+    }));
+    paypal.__setPaypalTestOverride({ client, mode: "sandbox" });
+    const err = await paypal.captureOrder("5O190127TN364715T").catch((e) => e);
+    expect(err).toBeInstanceOf(AppError);
+    expect(err.statusCode).toBe(status);
+    expect(err.message).toContain(text);
+    expect(err.message).toContain(issue); // the code is kept for lookups
+  });
+
+  it("gives each SDK call a time limit so a slow PayPal cannot hang a request", async () => {
+    const { client, requests } = stubClient(() => ({ status: 201, body: { id: "5O190127TN364715T", status: "CREATED" } }));
+    paypal.__setPaypalTestOverride({ client, mode: "sandbox" });
+    await paypal.createOrder({ referenceId: "ORD-000009", description: "x", amount: 1, currency: "USD" });
+    // The SDK turns our abort signal into an axios cancel token on the request.
+    expect(requests[0].cancelToken).toBeDefined();
+  });
+
+  it("turns an aborted or timed-out PayPal call into a clear 504", async () => {
+    const client = new Client({
+      clientCredentialsAuthCredentials: {
+        oAuthClientId: "dummy-id",
+        oAuthClientSecret: "dummy-secret",
+        oAuthToken: { accessToken: "seeded-token", tokenType: "Bearer", expiry: BigInt(Math.floor(Date.now() / 1000) + 3600) },
+      },
+      environment: Environment.Sandbox,
+      unstable_httpClientOptions: {
+        adapter: async () => {
+          throw Object.assign(new Error("The HTTP call was aborted."), { name: "AbortError" });
+        },
+      },
+      httpClientOptions: { retryConfig: { maxNumberOfRetries: 0 } },
+    });
+    paypal.__setPaypalTestOverride({ client, mode: "sandbox" });
+    const err = await paypal.createOrder({ referenceId: "ORD-000010", description: "x", amount: 1, currency: "USD" }).catch((e) => e);
+    expect(err).toBeInstanceOf(AppError);
+    expect(err.statusCode).toBe(504);
+    expect(err.message).toContain("too long");
   });
 });
 
