@@ -24,44 +24,32 @@ AI agents that investigate PayPal disputes and refund requests (Sandbox, test mo
 
 **About the project** (Markdown)
 ```markdown
-## Inspiration
-Small online sellers lose real money on PayPal disputes and refund requests. Not because they are wrong, but because they answer late, without evidence, or refund out of fear when they would have won. Big companies have dispute teams. A one-person shop has a 10-day deadline and a busy inbox.
+## The problem
+Small online shops lose money on PayPal disputes and refund requests. They answer late, have no proof, or refund when they did not need to. A big company has a team for this. A small shop has one person and a deadline.
 
-## What it does
-PayDesk is an AI co-pilot for PayPal sellers with two agents and one rule: **AI prepares, a human approves.**
+## What PayDesk does
+PayDesk is an AI helper for people who sell with PayPal. The AI does the investigating. **The seller makes the final decision.**
 
-**Everything in this demo runs on the PayPal Sandbox with test money.** Payments, refunds and disputes go through PayPal's real sandbox APIs, but no real money moves.
+Everything in this demo runs on the PayPal Sandbox with test money.
 
-- **Dispute agent.** A buyer opens a dispute in PayPal. It reaches PayDesk through a **PayPal webhook** (or the dashboard's one-click sync), a case opens with PayPal's real response deadline, and the agent starts immediately. It reads the dispute from the **Disputes API**, checks the payment through the **PayPal Server SDK**, and gathers evidence from the store's own records: what was sold, when it was delivered, whether the buyer downloaded it, past refunds and support history. It then recommends **accept, offer a partial refund, or contest**, with an estimated chance to win, a drafted note to PayPal and an evidence file. The seller clicks Approve and PayDesk answers PayPal.
-- **Refund agent.** A buyer types their problem in plain words ("I was charged twice for the UI kit"). The AI finds the right PayPal payment and opens a case. The refund agent checks the payment live in PayPal, detects duplicate charges, applies the store's refund policy and proposes a refund (for a double charge, only the duplicate payment) or asks for details. One click refunds through the PayPal Payments API.
-- **Ask PayPal.** A chat over the seller's PayPal account built on **PayPal's Agent Toolkit** ("Which disputes need my attention first?"). Read-only by design.
+- **Refunds.** A buyer writes "I was charged twice". The AI finds the payment, checks PayPal, sees the duplicate, and suggests refunding that one payment. The seller clicks Approve and PayPal sends the refund.
+- **Disputes.** When a buyer opens a dispute on PayPal, PayDesk picks it up and opens a case. It collects proof (delivery and download records) and suggests what to do: accept, offer part of the money back, or contest. The seller clicks Approve and the answer goes to PayPal.
+- **Ask PayPal.** A chat where the seller asks about disputes and sales, like "Which disputes need my attention first?".
 
 ## How we built it
-- **PayPal:** JS SDK Smart Buttons for checkout; **PayPal Server SDK** (APIMatic-generated, TypeScript) for Orders v2 (create, capture) and Payments v2 (capture lookup, refunds), idempotent with PayPal-Request-Id; **Disputes API** (read, accept claim, make offer, provide evidence as multipart, sandbox adjudicate); **Webhooks** with signature verification for CUSTOMER.DISPUTE.* events; **PayPal Agent Toolkit** for the chat.
-- **AI:** two LangGraph pipelines on Groq (gpt-oss-120b): gather facts from PayPal → AI decision → policy guard (plain code) → drafted reply → proposal → human approval.
-- **App:** React + TypeScript + Tailwind, Node + Express + TypeScript, MongoDB, Socket.IO for live updates, 85 automated tests.
-- We used **APIMatic's Context Plugin for PayPal** while writing the Server SDK integration. It caught a real bug: SDK retries silently never run unless maximumRetryWaitTime is set, because its default is 0.
+- **PayPal:** Smart Buttons for checkout, the PayPal Server SDK for orders and refunds, the Disputes API, webhooks, and PayPal's Agent Toolkit for the chat.
+- **AI:** LangGraph agents on Groq. Each agent gathers facts from PayPal, decides, passes a rules check, and drafts a reply.
+- **App:** React, Node.js, Express, MongoDB and TypeScript, with 85 automated tests.
+- We built the PayPal payment and refund code with APIMatic's Context Plugin for PayPal.
 
-## Safety (the part we are proudest of)
-- **Policy guard in code.** The AI cannot talk its way past it: refund window, never more than what is left, no contesting "not received" without download proof, only actions PayPal currently allows, and refunds held for customers with 3+ refunds in 90 days.
-- **Evidence is built from records by code, never written by the AI**, so the agent cannot invent evidence.
-- **Atomic approval** (PENDING to PROCESSING): a double click can never refund twice.
-- Buyers never see the agent's internal reasoning.
-
-## Challenges we ran into
-- Making AI safe around money. We split "deciding" from "doing": the agent only proposes, and a separate code path executes after a human click.
-- Race conditions: a webhook-triggered agent run finishing after a human already approved. We made every save conditional.
-- Testing the real PayPal path without network access: we used the stub-transport seam described in the APIMatic plugin's testing skill.
-
-## Accomplishments that we're proud of
-- A full loop from buyer dispute to PayPal resolution, with live AI, in one click for the seller.
-- 85 tests, including the real PayPal code path against a stub transport.
+## Built to be safe
+- Rules written in code check every AI suggestion: the refund window, never more than what is left, and proof before contesting a dispute.
+- Proof files are made from store records, not written by the AI.
+- A double click can never refund twice.
+- Nothing moves until a person approves.
 
 ## What we learned
-PayPal's Disputes lifecycle (inquiry, chargeback, allowed actions via HATEOAS links), webhook verification, the APIMatic-generated SDK patterns, and how to design agentic commerce so a human stays in control.
-
-## What's next for PayDesk
-Real document evidence (PDF receipts, shipping tracking via the Shipment Tracking API), multi-store support via PayPal partner onboarding, and learning from outcomes to improve the win estimate.
+How PayPal disputes work, how to verify webhooks, and how to keep a person in charge when AI works near money.
 ```
 
 **Built with** (tags)
@@ -144,13 +132,13 @@ Tests: cd backend && npm test (85 tests).
 
 **APIMatic Context Plugin experience**
 ```
-We installed the APIMatic Context Plugin for PayPal (paypaldev/server-sdk-context-plugin-preview) and used its TypeScript skills while writing our PayPal Server SDK integration. What worked well: the skills are grounded in the SDK source, so client setup (clientCredentialsAuthCredentials, OrdersController/PaymentsController, named-argument calls, ApiError handling) was right the first time instead of guessed. The resilience skill caught a real bug: we had set maxNumberOfRetries, but the SDK's generated maximumRetryWaitTime defaults to 0, so no retry would ever happen. The same skill also showed the SDK's built-in logging (we send it to our own logs, with PayPal's debug id and no secrets) and abortSignal (a 25 s cap per call). The error-handling skill led us to map PayPal issue codes such as ORDER_NOT_APPROVED and INSTRUMENT_DECLINED to proper HTTP statuses and plain messages. The testing skill showed the unstable_httpClientOptions stub-adapter seam, which let us test the real PayPal code path with no network (14 tests). Issue: the installer looks for the Claude Code CLI on PATH, so with only the desktop app it installed for VS Code, and we copied the skills into the project manually. Compared to building without it: fewer wrong guesses about generated names and defaults, and better tests.
+We installed the APIMatic Context Plugin for PayPal and used its TypeScript guides while writing our PayPal Server SDK code (orders, payments and refunds). The guides come from the SDK's own source, so the client setup, the order and refund calls, and the error handling were right the first time instead of guessed. The resilience guide caught a real bug: we had set retries, but the SDK's retry wait time defaults to 0, so no retry would ever happen. It also showed the SDK's built-in logging and abortSignal, which we use to log PayPal debug ids and to cap each call at 25 seconds. The error-handling guide led us to turn PayPal error codes such as ORDER_NOT_APPROVED and INSTRUMENT_DECLINED into clear messages. The testing guide showed how to stub the SDK's network layer, which let us test the real PayPal code path with no network (14 tests). Compared with building without it, we guessed less about generated names and defaults, and wrote better tests.
 ```
 
 | Field | Answer |
 |---|---|
 | Age / jurisdiction / not an employee checkboxes | Tick all 3 (true for both of you) |
-| Which AI tools did you leverage? | Groq (gpt-oss-120b), LangGraph/LangChain, PayPal Agent Toolkit, APIMatic Context Plugin, Claude Code (coding assistant) |
+| Which AI tools did you leverage? | Groq (gpt-oss-120b), LangGraph and LangChain, PayPal Agent Toolkit, APIMatic Context Plugin |
 | Level of learning | Significant |
 | Gained AI value for your career? | Yes |
 

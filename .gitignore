@@ -19,8 +19,6 @@ playwright-report/
 test-results/
 *.log
 
-# Local Claude Code config
-.claude/
 
 # Demo video output (upload to YouTube instead)
 demo/*.webm
