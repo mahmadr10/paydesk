@@ -13,7 +13,7 @@ PayDesk: AI co-pilot for PayPal disputes & refunds
 
 **Elevator pitch** (max 200 characters)
 ```
-AI agents that investigate PayPal disputes and refund requests, gather real evidence, and prepare the answer. The seller just clicks Approve. Safe by design: no money moves without a human.
+AI agents that investigate PayPal disputes and refund requests (Sandbox, test money), collect evidence and draft the answer. The seller approves; no refund happens without a human.
 ```
 
 **Thumbnail**: use `demo/thumbnail.png` (3:2).
@@ -29,6 +29,8 @@ Small online sellers lose real money on PayPal disputes and refund requests. Not
 
 ## What it does
 PayDesk is an AI co-pilot for PayPal sellers with two agents and one rule: **AI prepares, a human approves.**
+
+**Everything in this demo runs on the PayPal Sandbox with test money.** Payments, refunds and disputes go through PayPal's real sandbox APIs, but no real money moves.
 
 - **Dispute agent.** A buyer opens a dispute in PayPal. A **PayPal webhook** reaches PayDesk, a case opens with PayPal's real response deadline, and the agent starts immediately. It reads the dispute from the **Disputes API**, checks the payment through the **PayPal Server SDK**, and gathers evidence from the store's own records: what was sold, when it was delivered, whether the buyer downloaded it, past refunds and support history. It then recommends **accept, offer a partial refund, or contest**, with an estimated chance to win, a drafted note to PayPal and an evidence file. The seller clicks Approve and PayDesk answers PayPal.
 - **Refund agent.** A buyer types their problem in plain words ("I was charged twice for the UI kit"). The AI finds the right PayPal payment and opens a case. The refund agent checks the payment live in PayPal, detects duplicate charges, applies the store's refund policy and proposes a full or partial refund, or asks for details. One click refunds through the PayPal Payments API.
