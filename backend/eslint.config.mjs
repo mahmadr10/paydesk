@@ -10,7 +10,8 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ["dist/", "node_modules/", "uploads/"],
+    // api/ is the Vercel serverless entry shim (plain CommonJS), not app code.
+    ignores: ["dist/", "node_modules/", "uploads/", "api/"],
   },
   {
     rules: {

@@ -26,11 +26,13 @@ function paypalToolkit() {
       configuration: {
         actions: {
           disputes: { list: true, get: true },
-          transactions: { list: true },
           orders: { get: true },
           payments: { getRefunds: true },
           invoices: { list: true, get: true },
-          insights: { get: true },
+          // transactions.list and insights.get are left off: they need
+          // PayPal's Transaction Search / reporting permissions, which a
+          // fresh sandbox app doesn't have. Sales totals come from the
+          // store's own records via list_store_orders below.
         },
         context: { sandbox: !env.PAYPAL_API_BASE.includes("api-m.paypal.com") },
       },
@@ -39,10 +41,20 @@ function paypalToolkit() {
   return toolkit;
 }
 
-// Simulated-mode tools with the same names the toolkit uses.
+// list_store_orders reads the store's own database (paid orders with refund
+// totals), so sales questions work in both modes. In simulated mode,
+// list_disputes is also served locally with the same name the toolkit uses.
+const storeOrdersTool = {
+  type: "function",
+  function: {
+    name: "list_store_orders",
+    description: "List the store's recent paid orders: amount, currency, status, how much was refunded, paid date, items. Use for sales and refund totals.",
+    parameters: { type: "object", properties: {} },
+  },
+};
 const localTools = [
   { type: "function", function: { name: "list_disputes", description: "List PayPal disputes with status and amount", parameters: { type: "object", properties: {} } } },
-  { type: "function", function: { name: "list_transactions", description: "List recent PayPal payments (orders) with status and refunds", parameters: { type: "object", properties: {} } } },
+  storeOrdersTool,
 ];
 
 async function runLocalTool(name: string): Promise<string> {
@@ -50,7 +62,7 @@ async function runLocalTool(name: string): Promise<string> {
     const cases = await Ticket.find({ dispute: { $ne: null } }).sort({ createdAt: -1 }).limit(25);
     return JSON.stringify(cases.map((c) => ({ dispute_id: c.dispute!.disputeId, reason: c.dispute!.reason, status: c.dispute!.status, stage: c.dispute!.stage, amount: c.dispute!.amount, currency: c.dispute!.currency, seller_response_due: c.dispute!.sellerResponseDue, case: c.ticketNumber })));
   }
-  if (name === "list_transactions") {
+  if (name === "list_store_orders") {
     const orders = await Order.find({ status: { $ne: "CREATED" } }).sort({ paidAt: -1 }).limit(25);
     return JSON.stringify(orders.map((o) => ({ order: o.orderNumber, capture_id: o.captureId, amount: o.total, currency: o.currency, status: o.status, refunded: o.refundedTotal, paid_at: o.paidAt, items: o.items.map((i) => i.name) })));
   }
@@ -73,14 +85,15 @@ export async function askAssistant(question: string, history: { role: "user" | "
     throw new AppError(400, "AI_DISABLED", "Add a GROQ_API_KEY to use the assistant.");
   }
   const live = paypalMode() === "sandbox";
-  const tools = live ? paypalToolkit().getTools() : localTools;
+  const tools = live ? [...paypalToolkit().getTools(), storeOrdersTool] : localTools;
 
   const messages: Msg[] = [
     {
       role: "system",
       content:
         "You are PayDesk's assistant for a small online seller. Answer questions about their PayPal business using the tools " +
-        "(disputes, transactions, orders, refunds, invoices, insights). Always call a tool for facts; never guess numbers. " +
+        "(PayPal disputes, order and refund lookups, invoices, and list_store_orders for the store's own sales and refund totals). " +
+        "Always call a tool for facts; never guess numbers. " +
         "Keep answers short and practical: plain text with simple '-' bullets, no markdown tables, no bold. Include amounts with currency. " +
         "You can only read data. If asked to refund or respond to a dispute, say to open the case and approve the agent's proposal. " +
         `Today is ${new Date().toISOString().slice(0, 10)}.`,
@@ -100,9 +113,10 @@ export async function askAssistant(question: string, history: { role: "user" | "
       toolsUsed.push(call.function.name);
       let content: string;
       try {
-        content = live
-          ? String((await paypalToolkit().handleToolCall(call as any)).content)
-          : await runLocalTool(call.function.name);
+        content =
+          live && call.function.name !== "list_store_orders"
+            ? String((await paypalToolkit().handleToolCall(call as any)).content)
+            : await runLocalTool(call.function.name);
       } catch (err) {
         content = JSON.stringify({ error: err instanceof Error ? err.message : "tool failed" });
       }

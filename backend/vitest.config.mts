@@ -20,5 +20,8 @@ export default defineConfig({
     // All files share one test database and each drops it when done, so
     // run files one after another (tests inside a file still run in order).
     fileParallelism: false,
+    // dist/ holds compiled copies of the tests (committed for Vercel).
+    // Only run the TypeScript sources.
+    include: ["src/**/*.test.ts"],
   },
 });

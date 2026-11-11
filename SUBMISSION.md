@@ -98,7 +98,7 @@ PayPal (sandbox):
 - PayPal Server SDK (@paypal/paypal-server-sdk, TypeScript), OrdersController: create and capture orders. PaymentsController: live capture lookup used by both agents, and refunds. Every POST is idempotent with PayPal-Request-Id.
 - Disputes API v1: read disputes, accept claim (refund), make offer (partial refund), provide evidence (multipart with a generated evidence file), sandbox adjudicate.
 - Webhooks (CUSTOMER.DISPUTE.CREATED/UPDATED/RESOLVED), verified with verify-webhook-signature: each new dispute automatically opens a case and starts the dispute agent.
-- PayPal Agent Toolkit (@paypal/agent-toolkit): read-only PayPal tools (disputes, transactions, orders, refunds, invoices, insights) for the "Ask PayPal" chat.
+- PayPal Agent Toolkit (@paypal/agent-toolkit): read-only PayPal tools (disputes, orders, refunds, invoices) for the "Ask PayPal" chat, plus a tool over the store's own sales records.
 
 AI:
 - Groq (openai/gpt-oss-120b) with LangGraph: the dispute agent and the refund agent each run "gather facts from PayPal, AI decision with structured output, code policy guard, AI-drafted reply". The output is a proposal that a human approves before PayPal is called.

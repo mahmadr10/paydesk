@@ -15,7 +15,7 @@ Small online sellers lose money on PayPal disputes and refund requests: they ans
 | **PayPal Server SDK** - Payments v2 | Live capture lookup + refunds (`PaymentsController`), idempotent via `PayPal-Request-Id` |
 | **Disputes API v1** | Read disputes, accept claim, make offer, provide evidence (multipart), sandbox adjudicate |
 | **Webhooks** + `verify-webhook-signature` | `CUSTOMER.DISPUTE.*` events open and update cases. Every event is verified with PayPal and stored once (idempotent). |
-| **PayPal Agent Toolkit** (`@paypal/agent-toolkit`) | "Ask PayPal" chat tools: disputes, transactions, orders, refunds, invoices, insights (read-only) |
+| **PayPal Agent Toolkit** (`@paypal/agent-toolkit`) | "Ask PayPal" chat tools: disputes, orders, refunds, invoices (read-only), plus the store's own sales records |
 
 The PayPal Server SDK integration was written with **APIMatic's Context Plugin for PayPal** (`paypaldev/server-sdk-context-plugin-preview`). Its TypeScript skills guided client setup (single long-lived `Client`, `clientCredentialsAuthCredentials`, `oAuthClockSkew`), named-argument calls, timeouts/retries and `ApiError` handling. Its resilience skill caught a real bug: SDK retries never happen unless `maximumRetryWaitTime` is also set, because its generated default is 0. Its testing skill gave the stub-transport seam used in `paypalService.sandbox.test.ts`. See `backend/src/services/paypalService.ts`.
 
