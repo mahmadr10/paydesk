@@ -23,6 +23,12 @@ async function setup() {
     // here and in CI (which genuinely has no key) rather than silently
     // depending on whoever's machine happens to run it.
     process.env.AI_ENABLED = "false";
+    // Same idea for PayPal: tests must never call the real sandbox just because
+    // a developer's local .env has keys. Empty values are "set", so dotenv
+    // won't fill them in, and the app falls back to its PayPal simulator.
+    process.env.PAYPAL_CLIENT_ID = "";
+    process.env.PAYPAL_CLIENT_SECRET = "";
+    process.env.PAYPAL_WEBHOOK_ID = "";
     // The returned function is Vitest's teardown - runs once after the whole
     // test run finishes, so the in-memory server's process is cleaned up
     // instead of lingering.
