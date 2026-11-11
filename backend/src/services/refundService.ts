@@ -2,6 +2,7 @@ import { env } from "../config/env";
 import { Order } from "../models/Order";
 import { Ticket, IRefundProposal } from "../models/Ticket";
 import { AppError } from "../utils/AppError";
+import { runInBackground } from "../utils/background";
 import { JwtPayload } from "../utils/jwt";
 import { logger } from "../observability/logger";
 import { runRefundAgent } from "../ai/refundAgentGraph";
@@ -150,7 +151,7 @@ export async function runAgent(ticketId: string, actor: JwtPayload | null) {
 // an order: staff find a proposal already waiting. Failures are only logged
 // (staff can always click "Run agent" again).
 export function runAgentInBackground(ticketId: string) {
-  runAgent(ticketId, null).catch((err) => logger.error({ err, ticketId }, "Automatic refund agent run failed"));
+  runInBackground(runAgent(ticketId, null), `Automatic refund agent run for ${ticketId}`);
 }
 
 // Human approval. For a refund action this is the ONLY path that calls the

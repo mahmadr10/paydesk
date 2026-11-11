@@ -34,6 +34,7 @@
     "@paypal/agent-toolkit": "1.11.0",
     "@paypal/paypal-server-sdk": "2.5.0",
     "@types/node-cron": "^3.0.11",
+    "@vercel/functions": "3.11.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",

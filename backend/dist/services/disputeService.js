@@ -54,6 +54,7 @@ const Ticket_1 = require("../models/Ticket");
 const User_1 = require("../models/User");
 const WebhookEvent_1 = require("../models/WebhookEvent");
 const AppError_1 = require("../utils/AppError");
+const background_1 = require("../utils/background");
 const logger_1 = require("../observability/logger");
 const ticketRepo = __importStar(require("../repositories/ticketRepository"));
 const io_1 = require("../sockets/io");
@@ -255,7 +256,7 @@ async function runAgent(ticketId, actor) {
     await broadcast(ticketId);
 }
 function runAgentInBackground(ticketId) {
-    runAgent(ticketId, null).catch((err) => logger_1.logger.error({ err, ticketId }, "Automatic dispute agent run failed"));
+    (0, background_1.runInBackground)(runAgent(ticketId, null), `Automatic dispute agent run for ${ticketId}`);
 }
 // Human approval: the only place we answer PayPal.
 async function approve(ticketId, actor, overrides) {

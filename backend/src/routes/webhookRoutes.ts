@@ -2,6 +2,7 @@ import { Router } from "express";
 import { logger } from "../observability/logger";
 import { paypalMode, verifyWebhookSignature } from "../services/paypalService";
 import { handleWebhookEvent } from "../services/disputeService";
+import { runInBackground } from "../utils/background";
 
 // PayPal calls this URL (set it in developer.paypal.com → your app →
 // Webhooks) for CUSTOMER.DISPUTE.* and PAYMENT.CAPTURE.* events. Each event
@@ -25,9 +26,9 @@ router.post("/paypal", async (req, res) => {
     res.status(400).json({ success: false, error: { code: "INVALID_SIGNATURE", message: "Webhook signature not verified." } });
     return;
   }
-  // Answer PayPal quickly; process right after.
+  // Answer PayPal quickly; process right after (kept alive on Vercel).
   res.status(200).json({ success: true });
-  handleWebhookEvent(event, "paypal", true).catch((err) => logger.error({ err }, "Webhook processing failed"));
+  runInBackground(handleWebhookEvent(event, "paypal", true), "Webhook processing");
 });
 
 export default router;

@@ -41,6 +41,7 @@ const env_1 = require("../config/env");
 const Order_1 = require("../models/Order");
 const Ticket_1 = require("../models/Ticket");
 const AppError_1 = require("../utils/AppError");
+const background_1 = require("../utils/background");
 const logger_1 = require("../observability/logger");
 const refundAgentGraph_1 = require("../ai/refundAgentGraph");
 const ticketRepo = __importStar(require("../repositories/ticketRepository"));
@@ -180,7 +181,7 @@ async function runAgent(ticketId, actor) {
 // an order: staff find a proposal already waiting. Failures are only logged
 // (staff can always click "Run agent" again).
 function runAgentInBackground(ticketId) {
-    runAgent(ticketId, null).catch((err) => logger_1.logger.error({ err, ticketId }, "Automatic refund agent run failed"));
+    (0, background_1.runInBackground)(runAgent(ticketId, null), `Automatic refund agent run for ${ticketId}`);
 }
 // Human approval. For a refund action this is the ONLY path that calls the
 // PayPal refund API. For no-refund / ask-for-info it just sends the reply.

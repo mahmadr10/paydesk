@@ -6,6 +6,7 @@ import { Ticket, IDisputeProposal } from "../models/Ticket";
 import { User } from "../models/User";
 import { WebhookEvent } from "../models/WebhookEvent";
 import { AppError } from "../utils/AppError";
+import { runInBackground } from "../utils/background";
 import { JwtPayload } from "../utils/jwt";
 import { logger } from "../observability/logger";
 import * as ticketRepo from "../repositories/ticketRepository";
@@ -214,7 +215,7 @@ export async function runAgent(ticketId: string, actor: JwtPayload | null) {
 }
 
 export function runAgentInBackground(ticketId: string) {
-  runAgent(ticketId, null).catch((err) => logger.error({ err, ticketId }, "Automatic dispute agent run failed"));
+  runInBackground(runAgent(ticketId, null), `Automatic dispute agent run for ${ticketId}`);
 }
 
 // Human approval: the only place we answer PayPal.
