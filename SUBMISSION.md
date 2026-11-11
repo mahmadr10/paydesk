@@ -78,14 +78,14 @@ https://github.com/mahmadr10/paydesk
 
 **If it existed before, explain what already existed and what you built during the submission period**
 ```
-PayDesk is a new product built for this hackathon (Nov 9, 2026 onward). It reuses the base of our earlier project: login, roles and the case workflow. Everything that makes PayDesk what it is is new: PayPal checkout, orders and refunds (Server SDK), the Disputes API and webhooks, the AI dispute agent and AI refund agent with safety rules and human approval, smart intake, Ask PayPal (Agent Toolkit), the seller co-pilot dashboard, and 85 tests. About 4,900 lines of code across 26 new files were added during the hackathon, and about 40% of the current source code is new. The git history shows it.
+PayDesk is a new product built for this hackathon (Nov 9, 2026 onward). It reuses the base of our earlier project: login, roles and the case workflow. Everything that makes PayDesk what it is is new, and it all runs on the PayPal Sandbox: PayPal checkout, orders and refunds through the PayPal Server SDK (written with APIMatic's Context Plugin for PayPal), the Disputes API and webhooks, the AI dispute agent and AI refund agent with safety rules and human approval, smart intake, Ask PayPal (Agent Toolkit), the seller co-pilot dashboard, and 85 tests. About 4,900 lines of code across 26 new files were added during the hackathon, and about 40% of the current source code is new. The git history shows it.
 ```
 
 **Explain how your project meets the main technology requirement**
 ```
 PayPal (sandbox):
 - PayPal JS SDK (Smart Buttons): buyer checkout.
-- PayPal Server SDK (@paypal/paypal-server-sdk, TypeScript), OrdersController: create and capture orders. PaymentsController: live capture lookup used by both agents, and refunds. Every POST is idempotent with PayPal-Request-Id.
+- PayPal Server SDK (@paypal/paypal-server-sdk, TypeScript, made by APIMatic), written with APIMatic's Context Plugin for PayPal. OrdersController: create and capture orders. PaymentsController: live capture lookup used by both agents, and refunds. Every POST is idempotent with PayPal-Request-Id.
 - Disputes API v1: read disputes, accept claim (refund), make offer (partial refund), provide evidence (multipart with a generated evidence file), sandbox adjudicate.
 - Webhooks (CUSTOMER.DISPUTE.CREATED/UPDATED/RESOLVED), verified with verify-webhook-signature: a new dispute opens a case and starts the dispute agent. The seller dashboard also has a one-click "Sync disputes from PayPal".
 - PayPal Agent Toolkit (@paypal/agent-toolkit): read-only PayPal tools (disputes, orders) for the "Ask PayPal" chat, plus a tool over the store's own sales records.
