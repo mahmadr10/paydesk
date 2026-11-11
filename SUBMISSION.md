@@ -94,6 +94,8 @@ AI:
 - Groq (openai/gpt-oss-120b) with LangGraph: the dispute agent and the refund agent each run "gather facts from PayPal, AI decision with structured output, code policy guard, AI-drafted reply". The output is a proposal that a human approves before PayPal is called.
 - Groq for smart intake: turns a buyer's free-text message into a case linked to the right PayPal payment.
 - Groq with tool calling over the PayPal Agent Toolkit for the seller chat.
+
+Sponsor tool: APIMatic. The Context Plugin for PayPal guided our Server SDK code: client setup, error handling, retries, logging and tests that run without a network.
 ```
 
 **Which additional sponsor tool(s) did you use?**: **APIMatic**
