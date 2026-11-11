@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { ChatGroq } from "@langchain/groq";
 import { env } from "../config/env";
 import { TICKET_PRIORITIES, TicketPriority } from "../models/Ticket";
+import { groqModel } from "./groq";
 
 // Smart intake: the customer writes one free-text message ("I got charged
 // twice for the UI kit") and this turns it into a proper ticket: which of
@@ -78,9 +78,7 @@ export async function runIntake(message: string, orders: IntakeOrder[], categori
   if (!useLlm) return rulesIntake(message, orders, categories);
 
   try {
-    const model = new ChatGroq({ apiKey: env.GROQ_API_KEY, model: env.AI_MODEL, temperature: 0 }).withStructuredOutput(
-      intakeSchema
-    );
+    const model = groqModel(0).structured(intakeSchema);
     const orderList = orders
       .map(
         (o) =>

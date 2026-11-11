@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
-import { ChatGroq } from "@langchain/groq";
-import { env } from "../config/env";
 import * as paypal from "../services/paypalService";
 import type { DisputeSnapshot } from "../services/paypalService";
+import { groqModel } from "./groq";
 
 // The dispute agent. A PayPal dispute (inquiry or chargeback) arrives and
 // the seller must answer before a deadline: refund, offer a partial refund,
@@ -97,7 +96,7 @@ type S = typeof State.State;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const human = (s: string) => s.replace(/_/g, " ").toLowerCase();
-const model = () => new ChatGroq({ apiKey: env.GROQ_API_KEY, model: env.AI_MODEL, temperature: 0.1 });
+const model = () => groqModel(0.1);
 
 // ── 1. gatherEvidence ──────────────────────────────────────────────────
 
@@ -220,7 +219,7 @@ async function assess(state: S): Promise<Partial<S>> {
   let r: z.infer<typeof assessSchema>;
   if (state.useLlm) {
     r = await model()
-      .withStructuredOutput(assessSchema)
+      .structured(assessSchema)
       .invoke([
         {
           role: "system",

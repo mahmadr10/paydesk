@@ -19,7 +19,7 @@ export function SourceBadge({ source, paypal }: { source: "groq" | "rules"; payp
   return (
     <div className="flex flex-wrap gap-1.5">
       <span className={`rounded px-2 py-0.5 text-[11px] font-medium ${source === "groq" ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-500"}`}>
-        {source === "groq" ? "Live AI (Groq)" : "Rules fallback (no AI key)"}
+        {source === "groq" ? "Live AI (Groq)" : "Rules fallback (AI unavailable)"}
       </span>
       {paypal && (
         <span className={`rounded px-2 py-0.5 text-[11px] font-medium ${paypal === "sandbox" ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-amber-700"}`}>

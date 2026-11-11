@@ -31,6 +31,10 @@ const envSchema = z.object({
   // instead of calling out to an LLM - the app must work with zero API key.
   AI_ENABLED: z.enum(["true", "false"]).default("true"),
   GROQ_API_KEY: z.string().optional(),
+  // Optional extra keys (ideally from a different Groq account): AI calls are
+  // spread over all of them and move to the next one when a key is rate limited.
+  GROQ_API_KEY_2: z.string().optional(),
+  GROQ_API_KEY_3: z.string().optional(),
   // Groq's model lineup changes over time (the Llama 3.x models this
   // originally targeted were retired) - verified live against
   // https://api.groq.com/openai/v1/models during development; gpt-oss-120b

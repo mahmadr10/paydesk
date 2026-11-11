@@ -81,7 +81,8 @@ export function RefundAgentPanel({ ticket }: { ticket: PayTicket }) {
             <div className="rounded-lg bg-indigo-50 p-3">
               <p className="text-xs uppercase tracking-wide text-indigo-500">Recommendation · {pd.human(p.issueType)}</p>
               <p className="text-lg font-semibold text-indigo-900">
-                {pd.human(p.action)} {p.amount > 0 && `· ${pd.money(p.amount, p.currency)}`}
+                {p.issueType === "DUPLICATE_CHARGE" && p.action === "FULL_REFUND" ? "Refund the duplicate charge" : pd.human(p.action)}{" "}
+                {p.amount > 0 && `· ${pd.money(p.amount, p.currency)}`}
               </p>
               <p className="text-xs text-indigo-700">Confidence {Math.round(p.confidence * 100)}%</p>
             </div>

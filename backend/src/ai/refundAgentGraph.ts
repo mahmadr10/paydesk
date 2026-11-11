@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
-import { ChatGroq } from "@langchain/groq";
 import { env } from "../config/env";
 import * as paypal from "../services/paypalService";
+import { groqModel } from "./groq";
 
 // The refund agent. Four steps, each with one job:
 //
@@ -105,10 +105,6 @@ type S = typeof State.State;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-function buildModel() {
-  return new ChatGroq({ apiKey: env.GROQ_API_KEY, model: env.AI_MODEL, temperature: 0.1 });
-}
-
 // ── 1. gatherFacts (tool) ───────────────────────────────────────────────
 
 async function gatherFacts(state: S): Promise<Partial<S>> {
@@ -186,7 +182,7 @@ function rulesAssess(state: S): z.infer<typeof assessSchema> {
           issueType: "DUPLICATE_CHARGE",
           action: "FULL_REFUND",
           amount: f.refundable,
-          reasoning: `The customer reports a double charge and order ${f.duplicateOrders[0]} has the same items and total, paid within 48 hours. Refunding this order removes the duplicate.`,
+          reasoning: `The customer reports a double charge and order ${f.duplicateOrders[0]} has the same items and total, paid within 48 hours. Refunding this one payment removes the duplicate, and the other payment stays.`,
           confidence: 0.9,
         }
       : {
@@ -238,8 +234,8 @@ async function assessClaim(state: S): Promise<Partial<S>> {
   if (state.useLlm) {
     const { order } = state.input;
     const f = state.facts;
-    result = await buildModel()
-      .withStructuredOutput(assessSchema)
+    result = await groqModel(0.1)
+      .structured(assessSchema)
       .invoke([
         {
           role: "system",
@@ -248,7 +244,8 @@ async function assessClaim(state: S): Promise<Partial<S>> {
             "Decide what should happen with a customer's refund request.\n" +
             "Store policy:\n" +
             `- Refunds are possible within ${f.refundWindowDays} days of payment.\n` +
-            "- Duplicate charges: full refund of the duplicate, but only if a matching second payment exists.\n" +
+            "- Duplicate charge (the customer paid twice for the same item): refund ONLY the duplicate payment, which is one payment's amount, never both payments. " +
+            "Use FULL_REFUND with the refundable amount of this ONE payment, and only if a matching second payment exists.\n" +
             "- Product never delivered / no access: full refund.\n" +
             "- Delivered but partly broken or not as described: partial refund (usually 30-60%) unless unusable.\n" +
             "- Change of mind inside the window: full refund.\n" +
@@ -279,7 +276,12 @@ async function assessClaim(state: S): Promise<Partial<S>> {
     steps: [
       {
         name: state.useLlm ? "AI assessed the claim" : "Rules assessed the claim",
-        detail: `${result.issueType.replace(/_/g, " ").toLowerCase()} → ${result.action.replace(/_/g, " ").toLowerCase()}` +
+        // A duplicate charge refunds ONE payment (the duplicate), so say that instead of "full refund".
+        detail: `${result.issueType.replace(/_/g, " ").toLowerCase()} → ${
+          result.issueType === "DUPLICATE_CHARGE" && result.action === "FULL_REFUND"
+            ? "refund the duplicate payment"
+            : result.action.replace(/_/g, " ").toLowerCase()
+        }` +
           (result.amount > 0 ? ` (${round2(result.amount)} ${state.facts.currency})` : ""),
       },
     ],
@@ -364,6 +366,9 @@ function templateReply(state: S): string {
   const cur = state.facts.currency;
   switch (state.action) {
     case "FULL_REFUND":
+      if (state.issueType === "DUPLICATE_CHARGE") {
+        return `We found that you were charged twice for the same item. We've refunded the duplicate payment of ${state.amount} ${cur} (order ${orderNumber}) to your PayPal account. Your other payment stays as it is, so you keep your purchase. It usually shows up within a few days. Sorry for the trouble!`;
+      }
       return `Thanks for your patience. We've issued a full refund of ${state.amount} ${cur} for order ${orderNumber} to your PayPal account. It usually shows up within a few days. Sorry for the trouble!`;
     case "PARTIAL_REFUND":
       return `Thanks for letting us know. We've refunded ${state.amount} ${cur} for order ${orderNumber} to your PayPal account to make up for the problem, and our team is fixing the issue you reported.`;
@@ -377,18 +382,20 @@ function templateReply(state: S): string {
 async function draftReply(state: S): Promise<Partial<S>> {
   let reply: string;
   if (state.useLlm) {
-    const res = await buildModel().invoke([
+    const res = await groqModel(0.1).invoke([
       {
         role: "system",
         content:
           "Write a short, warm reply (2-4 sentences) from the support team to the customer. It must match the FINAL decision exactly: " +
           "state the refund amount and currency if there is a refund, say it goes back to their PayPal account, or explain the reason " +
-          "if there is no refund, or ask the specific question if more info is needed. No subject line, no signature, no placeholders.",
+          "if there is no refund, or ask the specific question if more info is needed. " +
+          "If the issue type is DUPLICATE_CHARGE, say clearly that ONLY the duplicate payment is refunded and the customer keeps their purchase (their other payment stays). " +
+          "No subject line, no signature, no placeholders.",
       },
       {
         role: "user",
         content:
-          `Order: ${state.input.order.orderNumber}\nCustomer message: ${state.input.ticketDescription}\n` +
+          `Order: ${state.input.order.orderNumber}\nIssue type: ${state.issueType}\nCustomer message: ${state.input.ticketDescription}\n` +
           `Final decision: ${state.action}\nAmount: ${state.amount} ${state.facts.currency}\n` +
           `Reasoning: ${state.reasoning}\nPolicy notes: ${state.policyNotes.join(" ")}`,
       },

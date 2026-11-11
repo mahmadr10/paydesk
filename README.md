@@ -15,7 +15,7 @@ Small online sellers lose money on PayPal disputes and refund requests: they ans
 | **PayPal Server SDK** - Payments v2 | Live capture lookup + refunds (`PaymentsController`), idempotent via `PayPal-Request-Id` |
 | **Disputes API v1** | Read disputes, accept claim, make offer, provide evidence (multipart), sandbox adjudicate |
 | **Webhooks** + `verify-webhook-signature` | `CUSTOMER.DISPUTE.*` events open and update cases. Every event is verified with PayPal and stored once (idempotent). |
-| **PayPal Agent Toolkit** (`@paypal/agent-toolkit`) | "Ask PayPal" chat tools: disputes, orders, refunds, invoices (read-only), plus the store's own sales records |
+| **PayPal Agent Toolkit** (`@paypal/agent-toolkit`) | "Ask PayPal" chat tools: disputes and orders (read-only), plus the store's own sales records |
 
 The PayPal Server SDK integration was written with **APIMatic's Context Plugin for PayPal** (`paypaldev/server-sdk-context-plugin-preview`). Its TypeScript skills guided client setup (single long-lived `Client`, `clientCredentialsAuthCredentials`, `oAuthClockSkew`), named-argument calls, timeouts/retries and `ApiError` handling. Its resilience skill caught a real bug: SDK retries never happen unless `maximumRetryWaitTime` is also set, because its generated default is 0. The same skill gave us the SDK's built-in logging (sent into our structured logs, with PayPal's debug id and no secrets) and `abortSignal` (a 25 s cap per PayPal call, shown to users as a clear "PayPal took too long" message). The error-handling skill shaped the mapping of PayPal issue codes (for example `ORDER_NOT_APPROVED`, `INSTRUMENT_DECLINED`, `CAPTURE_FULLY_REFUNDED`) to proper HTTP statuses and plain messages. Its testing skill gave the stub-transport seam used in `paypalService.sandbox.test.ts`. See `backend/src/services/paypalService.ts`.
 
@@ -31,7 +31,7 @@ gather facts (PayPal API + records) → AI decision → policy guard (code) → 
 - **Evidence files are built from records by code, never written by the AI**, so the agent can't invent evidence.
 - **Approve is atomic** (PENDING → PROCESSING claim): a double-click can't refund twice.
 - Customers never see the agent's internal reasoning.
-- No Groq key? The same graphs run with rule-based decisions.
+- No Groq key, or Groq is rate limited? Calls move to the next of up to three keys, and wait and retry once. If the AI is still unavailable, the same graphs run with rule-based decisions and the screen says so ("Rules fallback").
 
 ## Run it locally (about 2 minutes)
 
@@ -68,7 +68,7 @@ Without PayPal keys a built-in simulator stands in for PayPal (the UI says so). 
 ## Tests
 
 ```bash
-cd backend && npm test    # 78 tests: unit + integration (real HTTP, in-memory MongoDB)
+cd backend && npm test    # 85 tests: unit + integration (real HTTP, in-memory MongoDB)
 ```
 
 These cover buy → capture → smart intake → duplicate detection → approve → refund → resolved; dispute → evidence → contest → adjudication; the policy guard; double-approve protection; and cross-customer access. The real PayPal code path (Server SDK + Disputes REST) is also tested against a stub transport, so the sandbox integration is checked without network access.

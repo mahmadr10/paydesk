@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.runIntake = runIntake;
 const zod_1 = require("zod");
-const groq_1 = require("@langchain/groq");
 const env_1 = require("../config/env");
 const Ticket_1 = require("../models/Ticket");
+const groq_1 = require("./groq");
 const intakeSchema = zod_1.z.object({
     orderNumber: zod_1.z.string().describe("The order number this is about, copied exactly from the list, or the string NONE."),
     title: zod_1.z.string().describe("A short ticket title, max 80 characters."),
@@ -50,7 +50,7 @@ async function runIntake(message, orders, categories) {
     if (!useLlm)
         return rulesIntake(message, orders, categories);
     try {
-        const model = new groq_1.ChatGroq({ apiKey: env_1.env.GROQ_API_KEY, model: env_1.env.AI_MODEL, temperature: 0 }).withStructuredOutput(intakeSchema);
+        const model = (0, groq_1.groqModel)(0).structured(intakeSchema);
         const orderList = orders
             .map((o) => `${o.orderNumber}: ${o.itemNames.join(", ")} - ${o.total} ${o.currency}, paid ${o.paidAt?.toISOString().slice(0, 10) ?? "?"}`)
             .join("\n");

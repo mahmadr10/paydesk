@@ -3,6 +3,8 @@ import { env } from "../config/env";
 import { Order } from "../models/Order";
 import { Ticket } from "../models/Ticket";
 import { AppError } from "../utils/AppError";
+import { logger } from "../observability/logger";
+import { GroqRateLimitError, isRateLimit, withGroqKey } from "../ai/groq";
 import { paypalMode } from "./paypalService";
 
 // "Ask PayPal" chat for the seller, powered by PayPal's official Agent
@@ -25,10 +27,10 @@ function paypalToolkit() {
       clientSecret: env.PAYPAL_CLIENT_SECRET!,
       configuration: {
         actions: {
+          // Only what the seller chat needs. Fewer tools means a smaller
+          // prompt on every AI call (invoices and refund lookups are unused).
           disputes: { list: true, get: true },
           orders: { get: true },
-          payments: { getRefunds: true },
-          invoices: { list: true, get: true },
           // transactions.list and insights.get are left off: they need
           // PayPal's Transaction Search / reporting permissions, which a
           // fresh sandbox app doesn't have. Sales totals come from the
@@ -70,14 +72,35 @@ async function runLocalTool(name: string): Promise<string> {
 }
 
 async function groqChat(messages: Msg[], tools: unknown[]) {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${env.GROQ_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: env.AI_MODEL, messages, tools, tool_choice: "auto", temperature: 0.2 }),
+  // withGroqKey spreads calls over every configured key and moves to the next
+  // one when Groq answers 429 (rate limit).
+  return withGroqKey(async (apiKey) => {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: env.AI_MODEL,
+        messages,
+        tools,
+        tool_choice: "auto",
+        temperature: 0.2,
+        reasoning_effort: "low", // smaller, faster answers (fewer tokens per minute)
+      }),
+    });
+    if (!res.ok) {
+      const body = (await res.text()).replace(/\s+/g, " ").slice(0, 300);
+      logger.error({ status: res.status, body }, "Groq chat call failed");
+      if (res.status === 429) throw new GroqRateLimitError(body);
+      throw new AppError(502, "AI_ERROR", `The AI service returned ${res.status}.`);
+    }
+    const json = (await res.json()) as any;
+    return json.choices[0].message as Msg;
+  }).catch((err) => {
+    if (isRateLimit(err)) {
+      throw new AppError(503, "AI_BUSY", "The AI is busy right now (free-plan limit). Please try again in a minute.");
+    }
+    throw err;
   });
-  if (!res.ok) throw new AppError(502, "AI_ERROR", `The AI service returned ${res.status}.`);
-  const json = (await res.json()) as any;
-  return json.choices[0].message as Msg;
 }
 
 export async function askAssistant(question: string, history: { role: "user" | "assistant"; content: string }[]) {

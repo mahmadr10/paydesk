@@ -37,9 +37,8 @@ exports.applyDisputePolicy = applyDisputePolicy;
 exports.runDisputeAgent = runDisputeAgent;
 const zod_1 = require("zod");
 const langgraph_1 = require("@langchain/langgraph");
-const groq_1 = require("@langchain/groq");
-const env_1 = require("../config/env");
 const paypal = __importStar(require("../services/paypalService"));
+const groq_1 = require("./groq");
 const State = langgraph_1.Annotation.Root({
     input: (0, langgraph_1.Annotation)(),
     useLlm: (0, langgraph_1.Annotation)(),
@@ -56,7 +55,7 @@ const State = langgraph_1.Annotation.Root({
 });
 const round2 = (n) => Math.round(n * 100) / 100;
 const human = (s) => s.replace(/_/g, " ").toLowerCase();
-const model = () => new groq_1.ChatGroq({ apiKey: env_1.env.GROQ_API_KEY, model: env_1.env.AI_MODEL, temperature: 0.1 });
+const model = () => (0, groq_1.groqModel)(0.1);
 // ── 1. gatherEvidence ──────────────────────────────────────────────────
 async function gatherEvidence(state) {
     const snapshot = await paypal.getDispute(state.input.disputeId);
@@ -172,7 +171,7 @@ async function assess(state) {
     let r;
     if (state.useLlm) {
         r = await model()
-            .withStructuredOutput(assessSchema)
+            .structured(assessSchema)
             .invoke([
             {
                 role: "system",
