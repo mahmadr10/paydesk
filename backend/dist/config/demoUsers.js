@@ -8,13 +8,13 @@ exports.seedDemoUsers = seedDemoUsers;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const User_1 = require("../models/User");
 const logger_1 = require("../observability/logger");
-// The demo accounts behind the one-click buttons on the login page.
-// They exist so anyone (a hackathon judge, a teammate) can try both sides of
-// the app instantly. They only get created when DEMO_MODE=true (see
-// config/seed.ts) or when `npm run seed:users` is run by hand.
+// Demo accounts for LOCAL development: a buyer, a seller and an admin, so you
+// can try every side of the app without signing up each time. They only get
+// created when DEMO_MODE=true (see config/seed.ts) or when
+// `npm run seed:users` is run by hand.
 //
-// The password is public on purpose. Registration is open anyway (anyone can
-// sign up as a buyer or a seller), so these accounts expose nothing new.
+// The password is public (it is in this file), so never enable DEMO_MODE on a
+// public deployment.
 exports.DEMO_PASSWORD = "DemoPass123!";
 exports.DEMO_USERS = [
     { name: "Ali Buyer", email: "buyer@paydesk.test", role: "CUSTOMER" },

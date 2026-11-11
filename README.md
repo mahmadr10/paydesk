@@ -50,10 +50,10 @@ npm install
 npm run dev               # http://localhost:5173
 ```
 
-With `DEMO_MODE=true` the login page has **one-click demo buttons** (buyer, seller, admin; password `DemoPass123!`). No sign-up needed.
+With `DEMO_MODE=true` the backend creates three local demo accounts on startup: `buyer@paydesk.test`, `seller@paydesk.test` and `admin@paydesk.test` (password `DemoPass123!`). You can also just use **Register**. Never turn `DEMO_MODE` on for a public deployment, because that password is public.
 
-1. Log in as the **Demo buyer** → **Shop** → buy something → **My orders** → Download → **Open PayPal dispute**.
-2. Log in as the **Demo seller** in another browser profile (or a private window) → **Co-pilot** shows the dispute and the agent's recommendation → open it → **Approve**.
+1. Log in as the **buyer** → **Shop** → buy something → **My orders** → Download → **Open PayPal dispute**.
+2. Log in as the **seller** in another browser profile (or a private window) → **Co-pilot** shows the dispute and the agent's recommendation → open it → **Approve**.
 3. Try **My orders → "Problem with an order?"** as the buyer for the refund agent, and **Ask PayPal** as the seller.
 
 Without PayPal keys a built-in simulator stands in for PayPal (the UI says so). The simulated disputes and webhooks follow the same code path as real ones.
@@ -68,7 +68,7 @@ Without PayPal keys a built-in simulator stands in for PayPal (the UI says so). 
 ## Tests
 
 ```bash
-cd backend && npm test    # 70 tests: unit + integration (real HTTP, in-memory MongoDB)
+cd backend && npm test    # 72 tests: unit + integration (real HTTP, in-memory MongoDB)
 ```
 
 These cover buy → capture → smart intake → duplicate detection → approve → refund → resolved; dispute → evidence → contest → adjudication; the policy guard; double-approve protection; and cross-customer access. The real PayPal code path (Server SDK + Disputes REST) is also tested against a stub transport, so the sandbox integration is checked without network access.

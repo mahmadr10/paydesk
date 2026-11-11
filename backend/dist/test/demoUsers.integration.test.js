@@ -10,8 +10,8 @@ const app_1 = require("../app");
 const db_1 = require("../config/db");
 const seed_1 = require("../config/seed");
 const demoUsers_1 = require("../config/demoUsers");
-// The login page's one-click demo buttons depend on these accounts existing
-// and accepting the shared demo password.
+// The local demo accounts (DEMO_MODE=true) must be created once and accept
+// the shared demo password.
 const app = (0, app_1.createApp)();
 (0, vitest_1.beforeAll)(async () => {
     await (0, db_1.connectDB)();

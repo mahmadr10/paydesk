@@ -37,7 +37,7 @@ PayDesk is an AI co-pilot for PayPal sellers with two agents and one rule: **AI 
 ## How we built it
 - **PayPal:** JS SDK Smart Buttons for checkout; **PayPal Server SDK** (APIMatic-generated, TypeScript) for Orders v2 (create, capture) and Payments v2 (capture lookup, refunds), idempotent with PayPal-Request-Id; **Disputes API** (read, accept claim, make offer, provide evidence as multipart, sandbox adjudicate); **Webhooks** with signature verification for CUSTOMER.DISPUTE.* events; **PayPal Agent Toolkit** for the chat.
 - **AI:** two LangGraph pipelines on Groq (gpt-oss-120b): gather facts from PayPal → AI decision → policy guard (plain code) → drafted reply → proposal → human approval.
-- **App:** React + TypeScript + Tailwind, Node + Express + TypeScript, MongoDB, Socket.IO for live updates, 70 automated tests.
+- **App:** React + TypeScript + Tailwind, Node + Express + TypeScript, MongoDB, Socket.IO for live updates, 72 automated tests.
 - We used **APIMatic's Context Plugin for PayPal** while writing the Server SDK integration. It caught a real bug: SDK retries silently never run unless maximumRetryWaitTime is set, because its default is 0.
 
 ## Safety (the part we are proudest of)
@@ -53,7 +53,7 @@ PayDesk is an AI co-pilot for PayPal sellers with two agents and one rule: **AI 
 
 ## Accomplishments that we're proud of
 - A full loop from buyer dispute to PayPal resolution, with live AI, in one click for the seller.
-- 70 tests, including the real PayPal code path against a stub transport.
+- 72 tests, including the real PayPal code path against a stub transport.
 
 ## What we learned
 PayPal's Disputes lifecycle (inquiry, chargeback, allowed actions via HATEOAS links), webhook verification, the APIMatic-generated SDK patterns, and how to design agentic commerce so a human stays in control.
@@ -88,7 +88,7 @@ https://github.com/mahmadr10/paydesk
 
 **If it existed before, explain what already existed and what you built during the submission period**
 ```
-Before Oct 1, 2026 we had a generic support-ticket app (login, roles, ticket workflow, audit log, live updates). During the hackathon we built everything PayPal- and AI-related on top of it: PayPal checkout (JS SDK), the PayPal Server SDK integration (orders, captures, refunds), the Disputes API integration and verified webhooks, the AI dispute agent and AI refund agent (LangGraph + Groq) with code policy guards and human approval, AI smart intake, the "Ask PayPal" assistant built on PayPal's Agent Toolkit, the seller co-pilot dashboard, and 70 tests. The git history shows the before/after.
+Before Oct 1, 2026 we had a generic support-ticket app (login, roles, ticket workflow, audit log, live updates). During the hackathon we built everything PayPal- and AI-related on top of it: PayPal checkout (JS SDK), the PayPal Server SDK integration (orders, captures, refunds), the Disputes API integration and verified webhooks, the AI dispute agent and AI refund agent (LangGraph + Groq) with code policy guards and human approval, AI smart intake, the "Ask PayPal" assistant built on PayPal's Agent Toolkit, the seller co-pilot dashboard, and 72 tests. The git history shows the before/after.
 ```
 
 **Explain how your project meets the main technology requirement**
@@ -120,14 +120,18 @@ https://github.com/mahmadr10/paydesk#run-it-locally-about-2-minutes
 
 **Testing instructions**
 ```
-Live demo: https://paydesk-web.vercel.app (use the one-click "Demo buyer" and "Demo seller" buttons on the login page; password DemoPass123!, PayPal Sandbox with test money). Or run locally in about 2 minutes with no accounts: see README "Run it locally". Set MONGODB_URI=memory (built-in temporary database) and DEMO_MODE=true. Without PayPal keys a built-in PayPal simulator is used; add sandbox PAYPAL_CLIENT_ID/SECRET to use the real PayPal sandbox. GROQ_API_KEY is optional (free at console.groq.com); without it the agents use rule-based decisions.
+Live demo: https://paydesk-web.vercel.app (PayPal Sandbox, test money only).
+Judge login, buyer:  [JUDGE BUYER EMAIL] / [JUDGE BUYER PASSWORD]
+Judge login, seller: [JUDGE SELLER EMAIL] / [JUDGE SELLER PASSWORD]
+(Fill these in on Devpost only. Do NOT commit real logins to this public file.) Open the buyer in one browser window and the seller in a private window.
+Or run locally in about 2 minutes with no accounts: see README "Run it locally". Set MONGODB_URI=memory (built-in temporary database) and DEMO_MODE=true. Without PayPal keys a built-in PayPal simulator is used; add sandbox PAYPAL_CLIENT_ID/SECRET to use the real PayPal sandbox. GROQ_API_KEY is optional (free at console.groq.com); without it the agents use rule-based decisions.
 
 Demo path:
-1. Log in with "Demo buyer". Shop > buy. My orders > Download > Open PayPal dispute (simulator) or Report a problem on sandbox.paypal.com (real sandbox).
-2. Log in with "Demo seller" in another browser profile. The Co-pilot shows the dispute and the agent's recommendation. Open it > Approve.
+1. Log in as the buyer. Shop > buy. My orders > Download. Then Report a problem on sandbox.paypal.com (real sandbox) with the PayPal test buyer account.
+2. Log in as the seller in another browser profile. Click Sync disputes from PayPal. The Co-pilot shows the dispute and the agent's recommendation. Open it > Approve.
 3. As the buyer: My orders > "Problem with an order?" > "I was charged twice for ...". As the seller: open the case > Approve refund.
 4. Seller: Ask PayPal.
-Tests: cd backend && npm test (70 tests).
+Tests: cd backend && npm test (72 tests).
 ```
 
 | Field | Answer |

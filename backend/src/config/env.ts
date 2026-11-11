@@ -46,8 +46,9 @@ const envSchema = z.object({
   JOBS_ENABLED: z.enum(["true", "false"]).default("true"),
   CRON_SECRET: z.string().optional(),
 
-  // "true" creates the demo accounts (buyer, seller, admin) on startup so the
-  // login page's one-click demo buttons work. Off by default.
+  // "true" creates three demo accounts (buyer, seller, admin, with a public
+  // password) on startup. For LOCAL development only; keep it off on any
+  // public deployment.
   DEMO_MODE: z.enum(["true", "false"]).default("false"),
 
   // PayPal (sandbox). Both keys come from developer.paypal.com -> Apps &

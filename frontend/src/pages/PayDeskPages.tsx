@@ -124,7 +124,7 @@ export function ShopPage() {
   return (
     <div className="mx-auto mt-8 max-w-5xl">
       <h1 className="text-2xl font-bold text-slate-800">Pixel & Co. - digital store</h1>
-      <p className="mb-4 text-sm text-slate-500">A demo seller using PayDesk. Buy something with PayPal, then try getting a refund or opening a dispute.</p>
+      <p className="mb-4 text-sm text-slate-500">Design assets, UI kits and courses. Pay securely with PayPal.</p>
       <ModeBanner />
       {paid && (
         <div className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
@@ -265,9 +265,6 @@ export function MyOrdersPage() {
           </div>
         ))}
       </div>
-      {config?.mode === "sandbox" && (
-        <p className="mt-4 text-xs text-slate-400">To open a dispute: log in to sandbox.paypal.com as the buyer → Activity → this payment → Report a problem.</p>
-      )}
     </div>
   );
 }

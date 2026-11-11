@@ -6,8 +6,8 @@ import { connectDB } from "../config/db";
 import { seedDefaults } from "../config/seed";
 import { DEMO_PASSWORD, DEMO_USERS, seedDemoUsers } from "../config/demoUsers";
 
-// The login page's one-click demo buttons depend on these accounts existing
-// and accepting the shared demo password.
+// The local demo accounts (DEMO_MODE=true) must be created once and accept
+// the shared demo password.
 const app = createApp();
 
 beforeAll(async () => {
