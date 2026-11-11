@@ -40,7 +40,7 @@ Everything in this demo runs on the PayPal Sandbox with test money.
 - **PayPal:** Smart Buttons for checkout, the PayPal Server SDK for orders and refunds, the Disputes API, webhooks, and PayPal's Agent Toolkit for the chat.
 - **AI:** LangGraph agents on Groq. Each agent gathers facts from PayPal, decides, passes a rules check, and drafts a reply.
 - **App:** React, Node.js, Express, MongoDB and TypeScript, with 85 automated tests.
-- We built the PayPal payment and refund code with APIMatic's Context Plugin for PayPal.
+- We built the PayPal payment and refund code with **APIMatic's Context Plugin for PayPal** and the SDK APIMatic makes for PayPal. Its guides gave us the right setup, error handling and tests from the start.
 
 ## Built to be safe
 - Rules written in code check every AI suggestion: the refund window, never more than what is left, and proof before contesting a dispute.
@@ -50,6 +50,9 @@ Everything in this demo runs on the PayPal Sandbox with test money.
 
 ## What we learned
 How PayPal disputes work, how to verify webhooks, and how to keep a person in charge when AI works near money.
+
+## Thank you
+Thank you to **APIMatic** for the PayPal Server SDK and the Context Plugin for PayPal. The plugin made our payment and refund code more correct and easier to test, and we learned a lot from how carefully it is made. Thank you to **PayPal** for the sandbox, the Agent Toolkit and this hackathon.
 ```
 
 **Built with** (tags)
@@ -132,7 +135,7 @@ Tests: cd backend && npm test (85 tests).
 
 **APIMatic Context Plugin experience**
 ```
-We installed the APIMatic Context Plugin for PayPal and used its TypeScript guides while writing our PayPal Server SDK code (orders, payments and refunds). The guides come from the SDK's own source, so the client setup, the order and refund calls, and the error handling were right the first time instead of guessed. The resilience guide caught a real bug: we had set retries, but the SDK's retry wait time defaults to 0, so no retry would ever happen. It also showed the SDK's built-in logging and abortSignal, which we use to log PayPal debug ids and to cap each call at 25 seconds. The error-handling guide led us to turn PayPal error codes such as ORDER_NOT_APPROVED and INSTRUMENT_DECLINED into clear messages. The testing guide showed how to stub the SDK's network layer, which let us test the real PayPal code path with no network (14 tests). Compared with building without it, we guessed less about generated names and defaults, and wrote better tests.
+Thank you, APIMatic team. The Context Plugin for PayPal was one of the most useful parts of our build, and we want to say that clearly. We used its TypeScript guides while writing our PayPal Server SDK code for orders, payments and refunds. The guides come from the SDK's own source, so the client setup, the order and refund calls, and the error handling were right the first time instead of guessed. The resilience guide caught a real bug in our code: we had set retries, but the SDK's retry wait time defaults to 0, so no retry would ever have happened. It also showed us the SDK's built-in logging and abortSignal, which we use to log PayPal debug ids and to cap each call at 25 seconds. The error-handling guide helped us turn PayPal error codes such as ORDER_NOT_APPROVED and INSTRUMENT_DECLINED into clear messages, and the testing guide showed how to stub the SDK's network layer, so we could test the real PayPal code path with no network (14 tests). Compared with building without it, we guessed much less and wrote better tests. We learned a lot from how carefully the guides are written. I am Muhammad Ahmad (github.com/mahmadr10), and I would love to work on tools like this at APIMatic one day.
 ```
 
 | Field | Answer |

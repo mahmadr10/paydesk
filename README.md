@@ -81,7 +81,11 @@ React + TypeScript + Vite + Tailwind · Node + Express + TypeScript · MongoDB (
 
 ## What was built during the hackathon
 
-PayDesk is built on our earlier support-desk project (auth, roles, case workflow, audit log, live updates; see `ARCHITECTURE.md`). Everything PayPal- and agent-related was built during the hackathon (Oct–Nov 2026): the store + checkout, PayPal Server SDK integration, disputes + webhooks, both AI agents with policy guards and approval flow, smart intake, the Agent Toolkit assistant, and the seller co-pilot UI.
+PayDesk is built on our earlier support-desk project (auth, roles, case workflow, audit log, live updates; see `ARCHITECTURE.md`). Everything PayPal- and agent-related was built during the hackathon (Oct-Nov 2026): the store + checkout, PayPal Server SDK integration, disputes + webhooks, both AI agents with policy guards and approval flow, smart intake, the Agent Toolkit assistant, and the seller co-pilot UI.
+
+## Thanks
+
+Thank you to **APIMatic** for the PayPal Server SDK and the Context Plugin for PayPal. The plugin's guides made our payment and refund code more correct and easier to test, and we learned a lot from how carefully they are written. Thank you to **PayPal** for the sandbox, the Agent Toolkit and this hackathon.
 
 ## License
 
