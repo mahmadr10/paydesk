@@ -137,7 +137,7 @@ Run it yourself: see the README "Run it locally" (about 2 minutes, no accounts n
 
 **APIMatic Context Plugin experience**
 ```
-The APIMatic Context Plugin for PayPal was one of the most useful parts of our build. We used its TypeScript guides to write our PayPal Server SDK code for orders, payments and refunds. Because the guides come from the SDK's own source, the client setup, the order and refund calls and the error handling were right the first time. The resilience guide caught a real bug: we had set retries, but the SDK's retry wait time defaults to 0, so no retry would ever have happened. It also showed us the built-in logging and abortSignal, which we use to log PayPal debug ids and cap each call at 25 seconds. The testing guide showed how to stub the network layer, so we could test the real PayPal code path with no network. We hit no blocking issues. Compared with building without it, we guessed much less and wrote better tests. I am Muhammad Ahmad (github.com/mahmadr10), and I would love to work on tools like this at APIMatic one day.
+The APIMatic Context Plugin for PayPal was one of the most useful parts of our build. Its guides come from the SDK's own source, so our PayPal Server SDK code for orders and refunds was right the first time. The resilience guide caught a real bug: the SDK's retry wait time defaults to 0, so our retries would never have run. The testing guide let us test the PayPal code with no network. No blocking issues, and we guessed much less than we would have without it. I am Muhammad Ahmad (github.com/mahmadr10), and I would love to work on tools like this at APIMatic one day.
 ```
 
 | Field | Answer |
