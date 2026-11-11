@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError";
+import { isProduction } from "../config/env";
 
 // Express recognizes this as an error handler specifically because it takes
 // 4 arguments (err, req, res, next). It must be registered LAST, after all
@@ -29,14 +30,15 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   // Anything we didn't throw on purpose (a bug, a library error) - log the
   // FULL error (stack trace included) for ourselves.
   req.log?.error({ err }, "Unexpected error");
+  // In production the client only gets a generic message (the full error is
+  // in the logs under this requestId). Outside production, include the real
+  // message and stack so problems are easy to debug locally.
   const errorDetails = err instanceof Error ? { message: err.message, name: err.name, stack: err.stack } : { message: String(err) };
   return res.status(500).json({
     success: false,
-    error: {
-      code: "INTERNAL_ERROR",
-      message: (err as any)?.message || "An unexpected error occurred.",
-      details: errorDetails,
-    },
+    error: isProduction
+      ? { code: "INTERNAL_ERROR", message: "An unexpected error occurred." }
+      : { code: "INTERNAL_ERROR", message: (err as any)?.message || "An unexpected error occurred.", details: errorDetails },
     requestId,
   });
 }
