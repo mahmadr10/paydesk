@@ -82,7 +82,7 @@ You can deploy the backend to **Vercel** (Serverless Functions) or **Render** (p
 
 ### Backend on Vercel (Serverless)
 
-The backend has been adapted to run seamlessly on Vercel serverless functions via `backend/api/index.ts` and `backend/vercel.json`:
+The backend has been adapted to run seamlessly on Vercel serverless functions via `backend/api/index.js` and `backend/vercel.json`:
 - **Serverless database pooling**: Caches MongoDB connections across warm lambdas to prevent connection exhaustion.
 - **Auto-initialization**: Seeds defaults (categories, SLA policies) automatically on cold starts.
 - **Cross-origin cookies**: Configured with `SameSite=None` and `Secure` in production so refresh tokens work across different Vercel domains.
@@ -91,14 +91,10 @@ The backend has been adapted to run seamlessly on Vercel serverless functions vi
 
 #### Step-by-step:
 
-1. [vercel.com](https://vercel.com) → **Add New** → **Project** → Import your repository.
-2. In the setup screen:
-   - **Root Directory**: Click "Edit" and choose **`backend`**.
-   - **Framework Preset**: Other (default).
-   - **Build Command**: `npm run build` (or leave default).
-   - **Output Directory**: Leave empty / default.
+1. [vercel.com](https://vercel.com) → **Add New** → **Project** → Import your repository (a public repo can also be imported by URL).
+2. In the setup screen the only thing to change is **Root Directory**: click "Edit" and choose **`backend`**. Everything else (framework "Other", an install command that keeps TypeScript available for the build, the build command, and the `public` output folder) is already set in `backend/vercel.json`, so you do not need to type it in.
 3. Under **Environment Variables**, add:
-   - `NODE_ENV` = `production`
+   - `NODE_ENV` = `production` (safe to set: `backend/vercel.json` installs dev tools such as TypeScript anyway, so the build still works)
    - `MONGODB_URI` = your MongoDB Atlas connection string (e.g. `mongodb+srv://...`)
    - `JWT_ACCESS_SECRET` = a secure random string (at least 32 characters)
    - `FRONTEND_ORIGIN` = your frontend Vercel URL (e.g. `https://paydesk.vercel.app` or multiple separated by comma: `https://paydesk.vercel.app,http://localhost:5173`)
@@ -106,11 +102,18 @@ The backend has been adapted to run seamlessly on Vercel serverless functions vi
    - `GROQ_API_KEY` = your Groq API key (optional)
    - `PAYPAL_CLIENT_ID` = your PayPal Sandbox Client ID (optional)
    - `PAYPAL_CLIENT_SECRET` = your PayPal Sandbox Secret (optional)
+   - `PAYPAL_WEBHOOK_ID` = the Webhook ID from your sandbox app (optional, see "PayPal webhooks" below)
    - `CRON_SECRET` = random secret string for Vercel Cron authentication (optional)
+   - `JOBS_ENABLED` = `false` and `OTEL_ENABLED` = `false` (recommended on serverless; the cron job replaces the background timer)
 4. Click **Deploy**.
 5. Once deployed, test your API:
    - `https://<your-backend>.vercel.app/` -> returns `{ "success": true, "message": "PayDesk API is running" }`
    - `https://<your-backend>.vercel.app/api/health` -> returns `{ "success": true, "database": "connected" }`
+   - If you see `INTERNAL_ERROR`, the database link is the usual cause: check `MONGODB_URI`, and in MongoDB Atlas under Network Access allow `0.0.0.0/0` (Vercel has no fixed IP). Production responses hide error details on purpose; the real error is in the Vercel function logs under the same `requestId`.
+
+#### PayPal webhooks (optional)
+
+Without webhooks, use **Sync disputes from PayPal** on the seller dashboard. For automatic cases: developer.paypal.com → your sandbox app → **Webhooks** → **Add Webhook**, URL `https://<your-backend>.vercel.app/api/v1/webhooks/paypal`, events `CUSTOMER.DISPUTE.CREATED`, `CUSTOMER.DISPUTE.UPDATED`, `CUSTOMER.DISPUTE.RESOLVED`. Copy the Webhook ID it shows into `PAYPAL_WEBHOOK_ID` and redeploy.
 
 ### Backend on Render (Persistent Container)
 
@@ -143,15 +146,15 @@ backend (Grafana Cloud, Honeycomb, etc.) if you have one.
 ### Frontend on Vercel
 
 1. [vercel.com](https://vercel.com) → sign up/log in with GitHub.
-2. **Add New** → **Project** → import the same `mahmadr10/servicedesk` repo.
+2. **Add New** → **Project** → import the same `mahmadr10/paydesk` repo (a second Vercel project from the same repo).
 3. **Root Directory** → set to `frontend` (Vercel needs to know this isn't
    a single-project repo).
 4. Framework preset should auto-detect **Vite**. Build command
    `npm run build`, output directory `dist` (Vercel usually fills these in
    automatically once it detects Vite).
-5. **Environment Variables** → add, using the Render URL from above:
-   - `VITE_API_URL` = `https://<your-render-url>/api/v1`
-   - `VITE_SOCKET_URL` = `https://<your-render-url>` (no `/api/v1` suffix)
+5. **Environment Variables** → add, using your backend URL (the Vercel or Render one from above):
+   - `VITE_API_URL` = `https://<your-backend-url>/api/v1`
+   - `VITE_SOCKET_URL` = `https://<your-backend-url>` (no `/api/v1` suffix)
 6. **Deploy**. You'll get a URL like `https://servicedesk-xxxx.vercel.app`.
 
 ### Close the loop
