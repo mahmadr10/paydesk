@@ -78,7 +78,7 @@ https://github.com/mahmadr10/paydesk
 
 **If it existed before, explain what already existed and what you built during the submission period**
 ```
-Before Oct 1, 2026 we had a generic support-ticket app (login, roles, ticket workflow, audit log, live updates). During the hackathon we built everything PayPal- and AI-related on top of it: PayPal checkout (JS SDK), the PayPal Server SDK integration (orders, captures, refunds), the Disputes API integration and verified webhooks, the AI dispute agent and AI refund agent (LangGraph + Groq) with code policy guards and human approval, AI smart intake, the "Ask PayPal" assistant built on PayPal's Agent Toolkit, the seller co-pilot dashboard, and 85 tests. The git history shows the before/after.
+PayDesk is a new product built for this hackathon (Nov 9, 2026 onward). It reuses the base of our earlier project: login, roles and the case workflow. Everything that makes PayDesk what it is is new: PayPal checkout, orders and refunds (Server SDK), the Disputes API and webhooks, the AI dispute agent and AI refund agent with safety rules and human approval, smart intake, Ask PayPal (Agent Toolkit), the seller co-pilot dashboard, and 85 tests. About 4,900 lines of code across 26 new files were added during the hackathon, and about 40% of the current source code is new. The git history shows it.
 ```
 
 **Explain how your project meets the main technology requirement**
