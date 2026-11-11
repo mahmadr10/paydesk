@@ -39,7 +39,7 @@ Needs Node 20+. No database or PayPal account required for a first look.
 
 ```bash
 cd backend
-cp .env.example .env      # set MONGODB_URI=memory, JWT_ACCESS_SECRET=anything-long, GROQ_API_KEY=... (optional)
+cp .env.example .env      # set MONGODB_URI=memory, DEMO_MODE=true, JWT_ACCESS_SECRET=anything-long, GROQ_API_KEY=... (optional)
 npm install
 npm run dev               # http://localhost:4000
 ```
@@ -50,8 +50,10 @@ npm install
 npm run dev               # http://localhost:5173
 ```
 
-1. Register a **Buyer** (role Customer) → **Shop** → buy something → **My orders** → Download → **Open PayPal dispute**.
-2. Register a **Seller** (role Agent) in another browser profile → **Co-pilot** shows the dispute and the agent's recommendation → open it → **Approve**.
+With `DEMO_MODE=true` the login page has **one-click demo buttons** (buyer, seller, admin; password `DemoPass123!`). No sign-up needed.
+
+1. Log in as the **Demo buyer** → **Shop** → buy something → **My orders** → Download → **Open PayPal dispute**.
+2. Log in as the **Demo seller** in another browser profile (or a private window) → **Co-pilot** shows the dispute and the agent's recommendation → open it → **Approve**.
 3. Try **My orders → "Problem with an order?"** as the buyer for the refund agent, and **Ask PayPal** as the seller.
 
 Without PayPal keys a built-in simulator stands in for PayPal (the UI says so). The simulated disputes and webhooks follow the same code path as real ones.

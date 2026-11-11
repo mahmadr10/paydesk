@@ -43,8 +43,8 @@ const TICKETS = [
 async function main() {
     await (0, db_1.connectDB)();
     await (0, seed_1.seedDefaults)();
-    const customer = await User_1.User.findOne({ email: "customer@demo.servicedesk" });
-    const agent = await User_1.User.findOne({ email: "agent@demo.servicedesk" });
+    const customer = await User_1.User.findOne({ email: "buyer@paydesk.test" });
+    const agent = await User_1.User.findOne({ email: "seller@paydesk.test" });
     if (!customer || !agent) {
         console.error("Demo accounts not found - run `npm run seed:users` first.");
         process.exit(1);

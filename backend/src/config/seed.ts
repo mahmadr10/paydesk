@@ -2,6 +2,8 @@ import { Category } from "../models/Category";
 import { SLAPolicy, DEFAULT_SLA_POLICIES } from "../models/SLAPolicy";
 import { TicketPriority, TICKET_PRIORITIES } from "../models/Ticket";
 import { logger } from "../observability/logger";
+import { env } from "./env";
+import { seedDemoUsers } from "./demoUsers";
 
 const DEFAULT_CATEGORIES = ["Technical", "Billing", "Account", "Payment", "Other"];
 
@@ -43,5 +45,7 @@ export async function seedDefaults() {
     );
     logger.info(`Seeded ${TICKET_PRIORITIES.length} default SLA policies`);
   }
+
+  if (env.DEMO_MODE === "true") await seedDemoUsers();
   isSeeded = true;
 }

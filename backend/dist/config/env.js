@@ -46,6 +46,9 @@ const envSchema = zod_1.z.object({
     // during a short-lived test run is just noise).
     JOBS_ENABLED: zod_1.z.enum(["true", "false"]).default("true"),
     CRON_SECRET: zod_1.z.string().optional(),
+    // "true" creates the demo accounts (buyer, seller, admin) on startup so the
+    // login page's one-click demo buttons work. Off by default.
+    DEMO_MODE: zod_1.z.enum(["true", "false"]).default("false"),
     // PayPal (sandbox). Both keys come from developer.paypal.com -> Apps &
     // Credentials -> Sandbox. Leave them unset and the app runs a simulated
     // PayPal so it still works end to end without an account.

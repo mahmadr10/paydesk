@@ -28,6 +28,8 @@ export default async function setup() {
   process.env.PAYPAL_CLIENT_ID = "";
   process.env.PAYPAL_CLIENT_SECRET = "";
   process.env.PAYPAL_WEBHOOK_ID = "";
+  // Demo accounts are opt-in per test (see demoUsers.integration.test.ts).
+  process.env.DEMO_MODE = "false";
 
   // The returned function is Vitest's teardown - runs once after the whole
   // test run finishes, so the in-memory server's process is cleaned up

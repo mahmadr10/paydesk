@@ -5,6 +5,8 @@ const Category_1 = require("../models/Category");
 const SLAPolicy_1 = require("../models/SLAPolicy");
 const Ticket_1 = require("../models/Ticket");
 const logger_1 = require("../observability/logger");
+const env_1 = require("./env");
+const demoUsers_1 = require("./demoUsers");
 const DEFAULT_CATEGORIES = ["Technical", "Billing", "Account", "Payment", "Other"];
 let isSeeded = false;
 // Ticket creation requires a category to exist and an SLA policy for its
@@ -40,5 +42,7 @@ async function seedDefaults() {
         await SLAPolicy_1.SLAPolicy.insertMany(Ticket_1.TICKET_PRIORITIES.map((priority) => ({ priority, ...SLAPolicy_1.DEFAULT_SLA_POLICIES[priority] })));
         logger_1.logger.info(`Seeded ${Ticket_1.TICKET_PRIORITIES.length} default SLA policies`);
     }
+    if (env_1.env.DEMO_MODE === "true")
+        await (0, demoUsers_1.seedDemoUsers)();
     isSeeded = true;
 }

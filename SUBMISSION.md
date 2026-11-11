@@ -120,11 +120,11 @@ https://github.com/mahmadr10/paydesk#run-it-locally-about-2-minutes
 
 **Testing instructions**
 ```
-Runs locally in about 2 minutes with no accounts: see README "Run it locally". Set MONGODB_URI=memory (built-in temporary database). Without PayPal keys a built-in PayPal simulator is used; add sandbox PAYPAL_CLIENT_ID/SECRET to use the real PayPal sandbox. GROQ_API_KEY is optional (free at console.groq.com); without it the agents use rule-based decisions.
+Live demo: https://paydesk-web.vercel.app (use the one-click "Demo buyer" and "Demo seller" buttons on the login page; password DemoPass123!, PayPal Sandbox with test money). Or run locally in about 2 minutes with no accounts: see README "Run it locally". Set MONGODB_URI=memory (built-in temporary database) and DEMO_MODE=true. Without PayPal keys a built-in PayPal simulator is used; add sandbox PAYPAL_CLIENT_ID/SECRET to use the real PayPal sandbox. GROQ_API_KEY is optional (free at console.groq.com); without it the agents use rule-based decisions.
 
 Demo path:
-1. Register a buyer (role Customer). Shop > buy. My orders > Download > Open PayPal dispute.
-2. Register a seller (role Agent) in another browser profile. The Co-pilot shows the dispute and the agent's recommendation. Open it > Approve.
+1. Log in with "Demo buyer". Shop > buy. My orders > Download > Open PayPal dispute (simulator) or Report a problem on sandbox.paypal.com (real sandbox).
+2. Log in with "Demo seller" in another browser profile. The Co-pilot shows the dispute and the agent's recommendation. Open it > Approve.
 3. As the buyer: My orders > "Problem with an order?" > "I was charged twice for ...". As the seller: open the case > Approve refund.
 4. Seller: Ask PayPal.
 Tests: cd backend && npm test (70 tests).

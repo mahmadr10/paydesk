@@ -1,6 +1,6 @@
 node_modules/
 .env
-.env.example
-*.env.example
 
 .vercel
+.env.*
+!.env.example
