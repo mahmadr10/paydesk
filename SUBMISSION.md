@@ -32,8 +32,8 @@ PayDesk is an AI co-pilot for PayPal sellers with two agents and one rule: **AI 
 
 **Everything in this demo runs on the PayPal Sandbox with test money.** Payments, refunds and disputes go through PayPal's real sandbox APIs, but no real money moves.
 
-- **Dispute agent.** A buyer opens a dispute in PayPal. A **PayPal webhook** reaches PayDesk, a case opens with PayPal's real response deadline, and the agent starts immediately. It reads the dispute from the **Disputes API**, checks the payment through the **PayPal Server SDK**, and gathers evidence from the store's own records: what was sold, when it was delivered, whether the buyer downloaded it, past refunds and support history. It then recommends **accept, offer a partial refund, or contest**, with an estimated chance to win, a drafted note to PayPal and an evidence file. The seller clicks Approve and PayDesk answers PayPal.
-- **Refund agent.** A buyer types their problem in plain words ("I was charged twice for the UI kit"). The AI finds the right PayPal payment and opens a case. The refund agent checks the payment live in PayPal, detects duplicate charges, applies the store's refund policy and proposes a full or partial refund, or asks for details. One click refunds through the PayPal Payments API.
+- **Dispute agent.** A buyer opens a dispute in PayPal. It reaches PayDesk through a **PayPal webhook** (or the dashboard's one-click sync), a case opens with PayPal's real response deadline, and the agent starts immediately. It reads the dispute from the **Disputes API**, checks the payment through the **PayPal Server SDK**, and gathers evidence from the store's own records: what was sold, when it was delivered, whether the buyer downloaded it, past refunds and support history. It then recommends **accept, offer a partial refund, or contest**, with an estimated chance to win, a drafted note to PayPal and an evidence file. The seller clicks Approve and PayDesk answers PayPal.
+- **Refund agent.** A buyer types their problem in plain words ("I was charged twice for the UI kit"). The AI finds the right PayPal payment and opens a case. The refund agent checks the payment live in PayPal, detects duplicate charges, applies the store's refund policy and proposes a refund (for a double charge, only the duplicate payment) or asks for details. One click refunds through the PayPal Payments API.
 - **Ask PayPal.** A chat over the seller's PayPal account built on **PayPal's Agent Toolkit** ("Which disputes need my attention first?"). Read-only by design.
 
 ## How we built it
@@ -99,7 +99,7 @@ PayPal (sandbox):
 - PayPal JS SDK (Smart Buttons): buyer checkout.
 - PayPal Server SDK (@paypal/paypal-server-sdk, TypeScript), OrdersController: create and capture orders. PaymentsController: live capture lookup used by both agents, and refunds. Every POST is idempotent with PayPal-Request-Id.
 - Disputes API v1: read disputes, accept claim (refund), make offer (partial refund), provide evidence (multipart with a generated evidence file), sandbox adjudicate.
-- Webhooks (CUSTOMER.DISPUTE.CREATED/UPDATED/RESOLVED), verified with verify-webhook-signature: each new dispute automatically opens a case and starts the dispute agent.
+- Webhooks (CUSTOMER.DISPUTE.CREATED/UPDATED/RESOLVED), verified with verify-webhook-signature: a new dispute opens a case and starts the dispute agent. (The endpoint is built and tested; the seller dashboard also has a one-click "Sync disputes from PayPal" that does the same thing.)
 - PayPal Agent Toolkit (@paypal/agent-toolkit): read-only PayPal tools (disputes, orders) for the "Ask PayPal" chat, plus a tool over the store's own sales records.
 
 AI:
