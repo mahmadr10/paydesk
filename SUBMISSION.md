@@ -87,7 +87,7 @@ PayPal (sandbox):
 - PayPal JS SDK (Smart Buttons): buyer checkout.
 - PayPal Server SDK (@paypal/paypal-server-sdk, TypeScript), OrdersController: create and capture orders. PaymentsController: live capture lookup used by both agents, and refunds. Every POST is idempotent with PayPal-Request-Id.
 - Disputes API v1: read disputes, accept claim (refund), make offer (partial refund), provide evidence (multipart with a generated evidence file), sandbox adjudicate.
-- Webhooks (CUSTOMER.DISPUTE.CREATED/UPDATED/RESOLVED), verified with verify-webhook-signature: a new dispute opens a case and starts the dispute agent. (The endpoint is built and tested; the seller dashboard also has a one-click "Sync disputes from PayPal" that does the same thing.)
+- Webhooks (CUSTOMER.DISPUTE.CREATED/UPDATED/RESOLVED), verified with verify-webhook-signature: a new dispute opens a case and starts the dispute agent. The seller dashboard also has a one-click "Sync disputes from PayPal".
 - PayPal Agent Toolkit (@paypal/agent-toolkit): read-only PayPal tools (disputes, orders) for the "Ask PayPal" chat, plus a tool over the store's own sales records.
 
 AI:
@@ -105,30 +105,33 @@ https://github.com/mahmadr10/paydesk
 
 **Working demo / hosted app URL**
 ```
-https://github.com/mahmadr10/paydesk#run-it-locally-about-2-minutes
+https://paydesk-web.vercel.app
 ```
 
 **Testing instructions**
 ```
-Live demo: https://paydesk-web.vercel.app (PayPal Sandbox, test money only).
-Judge login, buyer:  [JUDGE BUYER EMAIL] / [JUDGE BUYER PASSWORD]
-Judge login, seller: [JUDGE SELLER EMAIL] / [JUDGE SELLER PASSWORD]
-(Fill these in on Devpost only. Do NOT commit real logins to this public file.) Open the buyer in one browser window and the seller in a private window.
-Or run locally in about 2 minutes with no accounts: see README "Run it locally". Set MONGODB_URI=memory (built-in temporary database) and DEMO_MODE=true. Without PayPal keys a built-in PayPal simulator is used; add sandbox PAYPAL_CLIENT_ID/SECRET to use the real PayPal sandbox. GROQ_API_KEY is optional (free at console.groq.com); without it the agents use rule-based decisions.
+Live site: https://paydesk-web.vercel.app (PayPal Sandbox, test money only).
 
-Demo path:
-1. Log in as the buyer. Shop > buy. My orders > Download. Then Report a problem on sandbox.paypal.com (real sandbox) with the PayPal test buyer account.
-2. Log in as the seller in another browser profile. Click Sync disputes from PayPal. The Co-pilot shows the dispute and the agent's recommendation. Open it > Approve.
-3. As the buyer: My orders > "Problem with an order?" > "I was charged twice for ...". As the seller: open the case > Approve refund.
-4. Seller: Ask PayPal.
-Tests: cd backend && npm test (85 tests).
+Buyer login:  [BUYER EMAIL]  /  [BUYER PASSWORD]
+Seller login: [SELLER EMAIL]  /  [SELLER PASSWORD]
+(Fill these in on Devpost only. Never put real logins in this public file.)
+Tip: open the buyer in one browser window and the seller in a private window.
+
+Quick tour (about 3 minutes):
+1. Seller: open "All cases" and the newest case. The AI box shows what it checked in PayPal and what it suggests. Click "Approve & refund" to finish the refund through PayPal.
+2. Seller: open "Ask PayPal" and click the first question.
+3. Buyer: "My orders" shows the payments. Type a problem like "I was charged twice for the course" and click "Get help" to open a new case.
+4. To pay as the buyer, use a PayPal Sandbox buyer account (free: developer.paypal.com, Testing Tools, Sandbox Accounts).
+5. Disputes: as that sandbox buyer on sandbox.paypal.com, choose "Report a problem" on a payment. Then as the seller click "Sync disputes from PayPal" and open the case.
+
+Run it yourself: see the README "Run it locally" (about 2 minutes, no accounts needed). Tests: cd backend && npm test (85 tests).
 ```
 
 | Field | Answer |
 |---|---|
-| Rate your PayPal integration experience (1-10) | [your honest rating] |
-| Why / feedback | [1-2 honest lines, for example: "The Server SDK made orders and refunds straightforward; disputes and webhooks needed the REST API since they are not in the SDK yet."] |
-| Open to feedback contact? | Your choice |
+| Rate your PayPal integration experience (1-10) | 8 |
+| Why / feedback | The Server SDK made orders, captures and refunds straightforward, and PayPal-Request-Id made retries safe. The sandbox is great for testing payments and disputes end to end. The Disputes API is powerful, and having it in the Server SDK too would make it even easier to use. |
+| Open to feedback contact? | Yes |
 
 **APIMatic Context Plugin experience**
 ```
